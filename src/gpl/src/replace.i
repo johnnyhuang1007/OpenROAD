@@ -163,8 +163,16 @@ replace_incremental_place_cmd()
 
 void set_timing_driven_mode(bool timing_driven)
 {
+  std::cout<<"set_timing_driven_mode: " << timing_driven << std::endl;
   Replace* replace = getReplace();
   replace->setTimingDrivenMode(timing_driven);
+}
+
+void set_ff_clustering_mode(bool ff_clustering)
+{
+  std::cout<<"set_ff_clustering_mode: " << ff_clustering << std::endl;
+  Replace* replace = getReplace();
+  replace->setFFClusteringMode(ff_clustering);
 }
 
 

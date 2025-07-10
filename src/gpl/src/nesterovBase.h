@@ -763,6 +763,7 @@ class NesterovPlaceVars
   static const int maxRecursionInitSLPCoef = 10;
 
   bool timingDrivenMode = true;
+  bool FFClusteringMode = false;
   int timingDrivenIterCounter = 0;
   bool routability_driven_mode = true;
   bool disableRevertIfDiverge = false;

@@ -263,6 +263,7 @@ void NesterovPlace::reset()
   recursionCntInitSLPCoef_ = 0;
 }
 
+//main_func
 int NesterovPlace::doNesterovPlace(int start_iter)
 {
   // if replace diverged in init() function,
@@ -504,6 +505,10 @@ int NesterovPlace::doNesterovPlace(int start_iter)
     const bool is_after_routability
         = (average_overflow_unscaled_ < npVars_.routability_end_overflow
            && !is_routability_need_);
+    if (npVars_.FFClusteringMode)
+    {
+      std::cout<< "TODO: add FF clustering mode" << std::endl;
+    }
     if (npVars_.timingDrivenMode
         && tb_->isTimingNetWeightOverflow(average_overflow_unscaled_) &&
         // do not execute timing-driven if routability is under execution

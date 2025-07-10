@@ -13,6 +13,7 @@ def global_placement(
     skip_initial_place=False,
     skip_nesterov_place=False,
     timing_driven=False,
+    ff_clustering=False,
     routability_driven=False,
     incremental=False,
     skip_io=False,

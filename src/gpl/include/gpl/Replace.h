@@ -92,6 +92,7 @@ class Replace
   void setPadRight(int padding);
 
   void setTimingDrivenMode(bool mode);
+  void setFFClusteringMode(bool mode);
 
   void setSkipIoMode(bool mode);
   void setDisableRevertIfDiverge(bool mode);
@@ -175,6 +176,7 @@ class Replace
   float keepResizeBelowOverflow_ = 1.0;
 
   bool timingDrivenMode_ = true;
+  bool FFClusteringMode_ = false;
   bool routabilityDrivenMode_ = true;
   bool routabilityUseRudy_ = true;
   bool uniformTargetDensityMode_ = false;

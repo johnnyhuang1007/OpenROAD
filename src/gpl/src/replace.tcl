@@ -5,6 +5,7 @@ sta::define_cmd_args "global_placement" {\
     [-skip_initial_place]\
     [-skip_nesterov_place]\
     [-timing_driven]\
+    [-ff_clustering]\
     [-routability_driven]\
     [-disable_timing_driven]\
     [-disable_routability_driven]\
@@ -59,6 +60,7 @@ proc global_placement { args } {
     flags {-skip_initial_place \
       -skip_nesterov_place \
       -timing_driven \
+      -ff_clustering \
       -routability_driven \
       -routability_use_grt \
       -disable_timing_driven \
@@ -86,6 +88,9 @@ proc global_placement { args } {
   if { $skip_io } {
     gpl::set_initial_place_max_iter_cmd 0
   }
+
+  set ff_clustering [info exists flags(-ff_clustering)]
+  gpl::set_ff_clustering_mode $ff_clustering
 
   set timing_driven [info exists flags(-timing_driven)]
   gpl::set_timing_driven_mode $timing_driven
