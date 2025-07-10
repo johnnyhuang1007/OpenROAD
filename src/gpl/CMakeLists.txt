@@ -40,6 +40,7 @@ target_sources(gpl
     src/graphics.cpp
     src/solver.cpp
     src/mbff.cpp
+    src/cluster_ext/clusterBase.cpp
 )
 
 messages(TARGET gpl)

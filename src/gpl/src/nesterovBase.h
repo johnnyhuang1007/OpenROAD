@@ -936,6 +936,7 @@ class NesterovBase
 
   float getWireLengthGradSum() const { return wireLengthGradSum_; }
   float getDensityGradSum() const { return densityGradSum_; }
+  float getFFClusterGradSum() const { return ffClusterGradSum_; }
 
   // update gCells with cx, cy
   void updateGCellCenterLocation(const std::vector<FloatPoint>& coordis);
@@ -1166,6 +1167,7 @@ class NesterovBase
 
   float wireLengthGradSum_ = 0;
   float densityGradSum_ = 0;
+  float ffClusterGradSum_ = 0;
 
   // alpha
   float stepLength_ = 0;

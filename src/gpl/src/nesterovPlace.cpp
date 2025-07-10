@@ -73,6 +73,7 @@ void NesterovPlace::updatePrevGradient(const std::shared_ptr<NesterovBase>& nb)
   nb->updatePrevGradient(wireLengthCoefX_, wireLengthCoefY_);
   float wireLengthGradSum = nb->getWireLengthGradSum();
   float densityGradSum = nb->getDensityGradSum();
+  float ffClusterGradSum = nb->getFFClusterGradSum();
 
   if (wireLengthGradSum == 0
       && recursionCntWlCoef_ < gpl::NesterovPlaceVars::maxRecursionWlCoef) {
@@ -105,6 +106,7 @@ void NesterovPlace::updateCurGradient(const std::shared_ptr<NesterovBase>& nb)
   nb->updateCurGradient(wireLengthCoefX_, wireLengthCoefY_);
   float wireLengthGradSum = nb->getWireLengthGradSum();
   float densityGradSum = nb->getDensityGradSum();
+  float ffClusterGradSum = nb->getFFClusterGradSum();
 
   if (wireLengthGradSum == 0
       && recursionCntWlCoef_ < gpl::NesterovPlaceVars::maxRecursionWlCoef) {
@@ -138,6 +140,7 @@ void NesterovPlace::updateNextGradient(const std::shared_ptr<NesterovBase>& nb)
 
   float wireLengthGradSum = nb->getWireLengthGradSum();
   float densityGradSum = nb->getDensityGradSum();
+  float ffClusterGradSum = nb->getFFClusterGradSum();
 
   if (wireLengthGradSum == 0
       && recursionCntWlCoef_ < gpl::NesterovPlaceVars::maxRecursionWlCoef) {

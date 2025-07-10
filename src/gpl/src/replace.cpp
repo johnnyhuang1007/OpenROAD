@@ -243,6 +243,8 @@ void Replace::runMBFF(int max_sz,
 	pntset.Run(max_sz, alpha, beta);
 }
 
+
+//TODO: FIND WHERE TO INIT CLUSTERBASE
 bool Replace::initNesterovPlace(int threads)
 {
 	if (!pbc_) {
@@ -288,9 +290,13 @@ bool Replace::initNesterovPlace(int threads)
 		nbc_ = std::make_shared<NesterovBaseCommon>(
 				nbVars, pbc_, log_, threads, clusters_);
 
+		//If the problem has several placement, it needs several NesterovBase instances.
 		for (const auto& pb : pbVec_) {
 			nbVec_.push_back(std::make_shared<NesterovBase>(nbVars, pb, nbc_, log_));
 		}
+
+		
+
 	}
 
 	if (!rb_) {
