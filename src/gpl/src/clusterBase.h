@@ -12,6 +12,7 @@
 #include "nesterovBase.h"
 #include "point.h"
 #include "routeBase.h"
+#include "clusterBinGrid.h"
 
 namespace gpl {
 
@@ -39,6 +40,7 @@ class ClusterBase
 
 
  private:
+	clusterBinGrid bg_;
 	NesterovBaseVars nbVars_;
 	std::shared_ptr<PlacerBase> pb_;
 	std::shared_ptr<NesterovBaseCommon> nbc_;

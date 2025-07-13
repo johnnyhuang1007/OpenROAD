@@ -31,7 +31,7 @@ class clusterBinGrid
     double lower_y;
     float ovfl;
     float target_density;
-    double maximal_weight = 0.0; // maximal weight of a star
+    double maximal_weight = 0.0;
     bool init = 0;
 
     // interface with FFT LIBRARY
