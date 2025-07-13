@@ -335,7 +335,6 @@ macro definitions
             }
         .
 */
-
 #include <cstdio>
 #include <cstdlib>
 #define fft2d_alloc_error_check(p)                        \

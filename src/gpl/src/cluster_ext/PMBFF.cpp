@@ -1,3 +1,12 @@
+#include <cstddef>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <variant>
+#include <vector>
+#include <random>
+
 #include "gpl/Replace.h"
 #include "../clusterBase.h"
 #include "../fft.h"
@@ -10,10 +19,12 @@
 namespace gpl
 {
 
-// virtual filler GCells
+using odb::dbBlock;
+using utl::GPL;
+
 void ClusterBase::initPMBFFCells()
 {
-	// extract average dx/dy in range (10%, 90%)
+
 	std::vector<int> dxStor;
 	std::vector<int> dyStor;
 
@@ -52,13 +63,9 @@ void ClusterBase::initPMBFFCells()
 		dySum += dyStor[i];
 	}
 
-	// the avgDx and avgDy will be used as filler cells'
-	// width and height
-	fillerDx_ = static_cast<int>(dxSum / (maxIdx - minIdx));
-	fillerDy_ = static_cast<int>(dySum / (maxIdx - minIdx));
 
 	int64_t coreArea = pb_->die().coreArea();
-	whiteSpaceArea_ = coreArea - static_cast<int64_t>(pb_->nonPlaceInstsArea());
+
 
 	// if(pb_->group() == nullptr) {
 	//   // nonPlaceInstsArea should not have density downscaling!!!
@@ -71,10 +78,7 @@ void ClusterBase::initPMBFFCells()
 	//   whiteSpaceArea_ = domainArea - pb_->nonPlaceInstsArea();
 	// }
 
-	float tmp_targetDensity
-			= static_cast<float>(stdInstsArea_)
-						/ static_cast<float>(whiteSpaceArea_ - macroInstsArea_)
-				+ 0.01;
+	/*
 	// targetDensity initialize
 	if (nbVars_.useUniformTargetDensity) {
 		targetDensity_ = tmp_targetDensity;
@@ -84,6 +88,7 @@ void ClusterBase::initPMBFFCells()
 
 	const int64_t nesterovInstanceArea = nesterovInstsArea();
 
+	
 	// TODO density screening
 	movableArea_ = whiteSpaceArea_ * targetDensity_;
 
@@ -103,28 +108,17 @@ void ClusterBase::initPMBFFCells()
 		movableArea_ = whiteSpaceArea_ * targetDensity_;
 		totalFillerArea_ = movableArea_ - nesterovInstanceArea;
 	}
+	*/
 
-	const int fillerCnt = static_cast<int>(
-			totalFillerArea_ / static_cast<int64_t>(fillerDx_ * fillerDy_));
-
+	/*
 	debugPrint(log_, GPL, "FillerInit", 1, "CoreArea {}", coreArea);
 	debugPrint(
 			log_, GPL, "FillerInit", 1, "nesterovInstsArea {}", nesterovInstanceArea);
-	debugPrint(log_, GPL, "FillerInit", 1, "WhiteSpaceArea {}", whiteSpaceArea_);
-	debugPrint(log_, GPL, "FillerInit", 1, "MovableArea {}", movableArea_);
-	debugPrint(
-			log_, GPL, "FillerInit", 1, "TotalFillerArea {}", totalFillerArea_);
 	debugPrint(log_, GPL, "FillerInit", 1, "NumFillerCells {}", fillerCnt);
 	debugPrint(log_, GPL, "FillerInit", 1, "FillerCellArea {}", fillerCellArea());
-	debugPrint(
-			log_, GPL, "FillerInit", 1, "FillerCellSize {} {}", fillerDx_, fillerDy_);
+	*/
 
-	//
-	// mt19937 supports huge range of random values.
-	// rand()'s RAND_MAX is only 32767.
-	//
-
-    PMBFFCnt_ = SBFFCnt_/4+1;
+    int PMBFFCnt_ = SBFFCnt_/4+1;
 
 	std::mt19937 randVal(0);
 	for (int i = 0; i < PMBFFCnt_; i++) {
@@ -140,7 +134,7 @@ void ClusterBase::initPMBFFCells()
 									1,
                                     -4); //TODO find the largest bit ff in lib
 
-		fillerStor_.push_back(myGCell);
+		PMBFFStor_.push_back(myGCell);
 	}
 }
 

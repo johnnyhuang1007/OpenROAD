@@ -98,6 +98,11 @@ class GCell
   int dDx() const;
   int dDy() const;
 
+  //float
+  float width() const { return static_cast<float>(ux_ - lx_); }
+  float height() const { return static_cast<float>(uy_ - ly_); }
+  float area() const {return static_cast<float>(dx() * dy()); }
+
   void setCenterLocation(int cx, int cy);
   // void setLocation(int x, int y);
   void setSize(int dx, int dy, GCellChange change = GCellChange::kNone);

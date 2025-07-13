@@ -38,6 +38,7 @@ InitialPlace::InitialPlace(InitialPlaceVars ipVars,
                            utl::Logger* log)
     : ipVars_(ipVars), pbc_(std::move(pbc)), pbVec_(pbVec), log_(log)
 {
+  std::cout<<"InitialPlace::InitialPlace() called" << std::endl;
 }
 
 void InitialPlace::doBicgstabPlace(int threads)

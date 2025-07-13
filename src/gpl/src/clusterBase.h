@@ -36,7 +36,7 @@ class ClusterBase
 	int getPMBFF_Cnt();
 	int64_t PMBFF_Area();
 	int64_t PMBFF_totCharge();
-//	int64_t movableArea() const;
+
 
  private:
 	NesterovBaseVars nbVars_;
@@ -47,14 +47,10 @@ class ClusterBase
 	//BinGrid bg_;
 	//std::unique_ptr<FFT> fft_;
 
-	//int fillerDx_ = 0;
-	//int fillerDy_ = 0;
 	int64_t whiteSpaceArea_ = 0;
 	int64_t movableArea_ = 0;
 	int64_t totalFillerArea_ = 0;
 
-	//int64_t stdInstsArea_ = 0;
-	//int64_t macroInstsArea_ = 0;
 	int64_t ffInstArea_ = 0;
 	size_t SBFFCnt_ = 0;
 

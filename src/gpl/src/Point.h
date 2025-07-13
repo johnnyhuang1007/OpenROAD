@@ -1,22 +1,22 @@
-// SPDX-License-Identifier: BSD-3-Clause
-// Copyright (c) 2018-2025, The OpenROAD Authors
+#ifndef POINT_H
+#define POINT_H
 
-#pragma once
 #include <algorithm>
 #include <cmath>
-namespace gpl {
 
 /**
  * @brief Template class for 2D point
  *
  * @tparam float Type of the point
  */
+struct FloatPoint {
+    /////////////////////////////////
+    // Constructors
+    /////////////////////////////////
 
+    /// Default constructor
+    FloatPoint() : x(0), y(0) {}
 
-class FloatPoint {
-    public:
-
-    FloatPoint() = default;
     /// Scalar constructor
     explicit FloatPoint(const float &u) : x(u), y(u) {}
 
@@ -247,8 +247,8 @@ class FloatPoint {
     };
 };
 
+inline float abs(const FloatPoint &u) {
+    return std::sqrt(u.x * u.x + u.y * u.y);
+}
 
-
-
-
-}  // namespace gpl
+#endif  // POINT_H

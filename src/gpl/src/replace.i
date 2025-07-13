@@ -55,6 +55,7 @@ replace_nesterov_place_cmd()
 {
   Replace* replace = getReplace();
   int threads = ord::OpenRoad::openRoad()->getThreadCount();
+  std::cout<<"replace_nesterov_place_cmd()" << std::endl;
   replace->doNesterovPlace(threads);
 }
 

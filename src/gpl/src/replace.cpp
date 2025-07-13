@@ -23,6 +23,8 @@
 #include "timingBase.h"
 #include "utl/Logger.h"
 
+#include "clusterBase.h"
+
 namespace gpl {
 
 using utl::GPL;
@@ -114,6 +116,7 @@ void Replace::addPlacementCluster(const Cluster& cluster)
 
 void Replace::doIncrementalPlace(int threads)
 {
+	std::cout<< "Replace::doIncrementalPlace()" << std::endl;
 	if (pbc_ == nullptr) {
 		PlacerBaseVars pbVars;
 		pbVars.padLeft = padLeft_;
@@ -226,7 +229,7 @@ void Replace::doInitialPlace(int threads)
 	ipVars.maxFanout = initialPlaceMaxFanout_;
 	ipVars.netWeightScale = initialPlaceNetWeightScale_;
 	ipVars.debug = gui_debug_initial_;
-
+	std::cout<<"InitialPlaceVars created" << std::endl;
 	std::unique_ptr<InitialPlace> ip(
 			new InitialPlace(ipVars, pbc_, pbVec_, log_));
 	ip_ = std::move(ip);
@@ -247,6 +250,7 @@ void Replace::runMBFF(int max_sz,
 //TODO: FIND WHERE TO INIT CLUSTERBASE
 bool Replace::initNesterovPlace(int threads)
 {
+	std::cout<< "initNesterovPlace" << std::endl;
 	if (!pbc_) {
 		PlacerBaseVars pbVars;
 		pbVars.padLeft = padLeft_;
@@ -275,12 +279,9 @@ bool Replace::initNesterovPlace(int threads)
 		return false;
 	}
 
-	bool cbc_;
-	if(!cbc_)
-	{
+	
 		
-	}
-
+	std::cout<<"nbc_ = " << nbc_ << std::endl;
 	if (!nbc_) {
 		NesterovBaseVars nbVars;
 		nbVars.targetDensity = density_;
@@ -300,9 +301,10 @@ bool Replace::initNesterovPlace(int threads)
 		for (const auto& pb : pbVec_) {
 			nbVec_.push_back(std::make_shared<NesterovBase>(nbVars, pb, nbc_, log_));
 		}
-
-		
-
+		std::cout<<1<<std::endl;
+		//cluster constructor
+		for (const auto& pb : pbVec_) 
+			cbVec_.push_back(std::make_shared<ClusterBase>(nbVars, pb, nbc_, log_));
 	}
 
 	if (!rb_) {

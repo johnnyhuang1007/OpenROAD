@@ -41,6 +41,8 @@ target_sources(gpl
     src/solver.cpp
     src/mbff.cpp
     src/cluster_ext/clusterBase.cpp
+    src/cluster_ext/PMBFF.cpp
+    src/cluster_ext/BinGrid.cpp
 )
 
 messages(TARGET gpl)

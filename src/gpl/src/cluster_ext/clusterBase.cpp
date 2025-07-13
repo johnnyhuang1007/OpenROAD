@@ -8,6 +8,9 @@
 
 namespace gpl {
 
+using odb::dbBlock;
+using utl::GPL;
+
 ClusterBase::ClusterBase()
 {
     std::cout<<"ClusterBase constructor called"<<std::endl;
@@ -23,6 +26,7 @@ ClusterBase::ClusterBase(NesterovBaseVars nbVars,
                         std::shared_ptr<NesterovBaseCommon> nbc,
                         utl::Logger* log)
 {
+	std::cout<<"ClusterBase constructor with parameters called"<<std::endl;
     nbVars_ = nbVars;
 	pb_ = std::move(pb);
 	nbc_ = std::move(nbc);
@@ -51,6 +55,10 @@ ClusterBase::ClusterBase(NesterovBaseVars nbVars,
 	// update gFillerCells
 	initPMBFFCells();
     
+	std::cout<<"SBFFCnt_ = " << SBFFCnt_ << std::endl;
+	std::cout<<"ffInstArea_ = " << ffInstArea_ << std::endl;
+	std::cout<<"PMBFFStor_.size() = " << PMBFFStor_.size() << std::endl;
+
 	nb_gcells_.reserve(pb_->insts().size() + PMBFFStor_.size());
 
 	// add place instances
