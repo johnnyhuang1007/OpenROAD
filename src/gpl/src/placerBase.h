@@ -60,6 +60,8 @@ class Instance
 
   bool isMacro() const;
 
+  bool isFF() const;
+  int getBitCnt() const { return BitCnt_; }
   // A placeable instance may be fixed during part of incremental placement.
   // It remains in the set of placeable objects though so as to simplify
   // the unlocking process.
@@ -108,6 +110,9 @@ class Instance
   int extId_ = INT_MIN;
   bool is_macro_ = false;
   bool is_locked_ = false;
+
+  bool is_FF_ = false;
+  int BitCnt_ = 0;  // number of bits in FF instance  
 };
 
 class Pin

@@ -19,8 +19,15 @@ class ClusterBase
 {
  public:
 	ClusterBase();
+	ClusterBase(NesterovBaseVars nbVars,
+               std::shared_ptr<PlacerBase> pb,
+               std::shared_ptr<NesterovBaseCommon> nbc,
+               utl::Logger* log);
 	~ClusterBase();
 	GCell& getPMBFF(size_t index) {return PMBFFStor_[index];}
+
+	//PMBFF util
+	void initPMBFFCells();
 
 	const std::vector<GCellHandle>& getGCells() const { return nb_gcells_; }
 
@@ -32,7 +39,7 @@ class ClusterBase
 //	int64_t movableArea() const;
 
  private:
-	//NesterovBaseVars nbVars_;
+	NesterovBaseVars nbVars_;
 	std::shared_ptr<PlacerBase> pb_;
 	std::shared_ptr<NesterovBaseCommon> nbc_;
 	utl::Logger* log_ = nullptr;
@@ -49,7 +56,7 @@ class ClusterBase
 	//int64_t stdInstsArea_ = 0;
 	//int64_t macroInstsArea_ = 0;
 	int64_t ffInstArea_ = 0;
-
+	size_t SBFFCnt_ = 0;
 
 	std::vector<GCell> PMBFFStor_;
 	std::vector<GCellHandle> nb_gcells_;

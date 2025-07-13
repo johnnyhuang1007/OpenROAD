@@ -34,7 +34,7 @@ class PlacerBaseCommon;
 class PlacerBase;
 class NesterovBaseCommon;
 class NesterovBase;
-class clusterBase;
+class ClusterBase;
 class RouteBase;
 class TimingBase;
 
@@ -134,7 +134,7 @@ class Replace
   std::shared_ptr<PlacerBaseCommon> pbc_;
   std::shared_ptr<NesterovBaseCommon> nbc_;
   std::vector<std::shared_ptr<PlacerBase>> pbVec_;
-  std::vector<std::shared_ptr<clusterBase>> cbVec_;
+  std::vector<std::shared_ptr<ClusterBase>> cbVec_;
   std::vector<std::shared_ptr<NesterovBase>> nbVec_;
   std::shared_ptr<RouteBase> rb_;
   std::shared_ptr<TimingBase> tb_;

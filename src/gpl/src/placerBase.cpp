@@ -24,6 +24,8 @@ using odb::dbBPin;
 using odb::dbBTerm;
 using odb::dbInst;
 using odb::dbITerm;
+using odb::dbMTerm;
+using odb::dbMaster;
 using odb::dbMPin;
 using odb::dbNet;
 using odb::dbPlacementStatus;
@@ -33,6 +35,7 @@ using odb::dbSet;
 using odb::dbSigType;
 using odb::Rect;
 using utl::GPL;
+
 
 static int fastModulo(int input, int ceil);
 
@@ -76,7 +79,22 @@ Instance::Instance(odb::dbInst* inst,
                  inst->getMaster()->getName(),
                  row_limit);
   }
+  BitCnt_ = 0;
+  is_FF_ =  inst->getMaster()->isSequential();
+  if(is_FF_)
+  {
+    odb::dbSet<odb::dbMTerm> mterms = inst->getMaster()->getMTerms();
+    for(odb::dbMTerm* MTerm : mterms)
+    {
+      if(MTerm->getName()[0] == 'D')
+      {
+        BitCnt_++;
+      }
+    }
+  }
 }
+
+
 
 // for dummy instances
 Instance::Instance(int lx, int ly, int ux, int uy) : Instance()
@@ -248,6 +266,11 @@ void Instance::setExtId(int extId)
 bool Instance::isMacro() const
 {
   return is_macro_;
+}
+
+bool Instance::isFF() const
+{
+  return is_FF_;
 }
 
 bool Instance::isLocked() const

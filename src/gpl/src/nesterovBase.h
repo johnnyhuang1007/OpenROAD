@@ -61,6 +61,9 @@ class GCell
   // filler cells
   GCell(int cx, int cy, int dx, int dy);
 
+  // PMBFF cells
+  GCell(int cx, int cy, int dx, int dy, int bitCnt);
+
   const std::vector<Instance*>& insts() const { return insts_; }
   const std::vector<GPin*>& gPins() const { return gPins_; }
 
@@ -70,6 +73,7 @@ class GCell
   void clearGPins() { gPins_.clear(); }
 
   void updateLocations();
+  void updateBitCnt();
 
   bool isLocked() const;
   void lock();
@@ -117,6 +121,8 @@ class GCell
   bool isFiller() const;
   bool isMacroInstance() const;
   bool isStdInstance() const;
+  bool isFFInstance() const;
+  int BitCnt() const;
   bool contains(odb::dbInst* db_inst) const;
 
   void print(utl::Logger* logger, bool print_only_name) const;
@@ -138,6 +144,8 @@ class GCell
   float densityScale_ = 0;
   float gradientX_ = 0;
   float gradientY_ = 0;
+
+  int Bit_Cnt_ = 0;
 
   GCellChange change_ = GCellChange::kNone;
 };
@@ -1226,6 +1234,7 @@ class GCellHandle
   {
   }
   GCellHandle(NesterovBase* nb, size_t idx) : storage_(nb), index_(idx) {}
+  GCellHandle(ClusterBase* cb, size_t idx) : storage_(cb), index_(idx) {}
 
   // Non-const versions
   GCell* operator->() { return &getGCell(); }
@@ -1246,7 +1255,7 @@ class GCellHandle
   size_t getIndex() const { return index_; }
 
  private:
-  using StorageVariant = std::variant<NesterovBaseCommon*, NesterovBase*>;
+  using StorageVariant = std::variant<NesterovBaseCommon*, NesterovBase*, ClusterBase*>;
 
   GCell& getGCell() const
   {

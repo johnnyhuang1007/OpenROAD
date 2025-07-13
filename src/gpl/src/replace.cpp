@@ -275,6 +275,12 @@ bool Replace::initNesterovPlace(int threads)
 		return false;
 	}
 
+	bool cbc_;
+	if(!cbc_)
+	{
+		
+	}
+
 	if (!nbc_) {
 		NesterovBaseVars nbVars;
 		nbVars.targetDensity = density_;

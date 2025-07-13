@@ -63,6 +63,7 @@ GCell::GCell(const std::vector<Instance*>& insts)
 {
 	insts_ = insts;
 	updateLocations();
+	updateBitCnt();
 }
 
 GCell::GCell(const int cx, const int cy, const int dx, const int dy)
@@ -71,6 +72,12 @@ GCell::GCell(const int cx, const int cy, const int dx, const int dy)
 	dLy_ = ly_ = cy - dy / 2;
 	dUx_ = ux_ = cx + dx / 2;
 	dUy_ = uy_ = cy + dy / 2;
+}
+
+GCell::GCell(const int cx, const int cy, const int dx, const int dy, const int bitCnt)
+	: GCell(cx, cy, dx, dy)
+{
+	Bit_Cnt_ = bitCnt;
 }
 
 bool GCell::isLocked() const
@@ -141,6 +148,24 @@ void GCell::updateLocations()
 	dLy_ = ly_ = bbox.yMin();
 	dUx_ = ux_ = bbox.xMax();
 	dUy_ = uy_ = bbox.yMax();
+}
+
+void GCell::updateBitCnt()
+{
+	if(!isFFInstance())
+	{
+		// if not FF instance, then Bit_Cnt_ is 0
+		Bit_Cnt_ = 0;
+		return;
+	}
+	std::vector<GPin*> gPins = gPins_; 
+	for(auto& gpin: gPins)
+	{
+		if(gpin->pin()->name()[0] == 'D')
+		{
+			Bit_Cnt_++;
+		}
+	}
 }
 
 void GCell::setCenterLocation(int cx, int cy)
@@ -261,6 +286,19 @@ bool GCell::isStdInstance() const
 		return false;
 	}
 	return !insts_[0]->isMacro();
+}
+
+bool GCell::isFFInstance() const
+{
+	if (!isInstance()) {
+		return false;
+	}
+	return insts_[0]->isFF();
+}
+
+int GCell::BitCnt() const
+{
+	return Bit_Cnt_;
 }
 
 void GCell::print(utl::Logger* logger, bool print_only_name = true) const
