@@ -132,6 +132,7 @@ class DetailedMgr
   void collectSingleHeightCells();
   void collectMultiHeightCells();
   void collectFixedCells();
+  void collectFFs();
   void collectWideCells();
 
   void restoreOriginalPositions();

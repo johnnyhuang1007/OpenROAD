@@ -42,6 +42,15 @@ ShiftLegalizer::ShiftLegalizer() = default;
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 ShiftLegalizer::~ShiftLegalizer() = default;
+
+
+bool ShiftLegalizer::legalize2025(DetailedMgr& mgr)
+{
+    return false;
+}
+
+
+
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 bool ShiftLegalizer::legalize(DetailedMgr& mgr)
@@ -61,7 +70,8 @@ bool ShiftLegalizer::legalize(DetailedMgr& mgr)
   network_ = mgr_->getNetwork();
 
   // Categorize the cells and create the different segments.
-  mgr.collectFixedCells();
+  //mgr.collectFixedCells();
+  mgr.collectFFs();
   mgr.collectSingleHeightCells();
   mgr.collectMultiHeightCells();
   mgr.collectWideCells();    // XXX: This requires segments!

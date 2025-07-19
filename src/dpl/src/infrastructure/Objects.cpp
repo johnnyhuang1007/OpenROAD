@@ -221,6 +221,14 @@ bool Node::isFiller() const
 {
   return (type_ == FILLER);
 }
+bool Node::isFF() 
+{
+  if (is_ff_ != -1) {
+    return is_ff_;
+  }
+  is_ff_ = getMaster()->getDbMaster()->isSequential();
+  return is_ff_;
+}
 bool Node::isStdCell() const
 {
   if (getDbInst() == nullptr) {

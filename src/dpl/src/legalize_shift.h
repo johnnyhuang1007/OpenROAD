@@ -24,6 +24,8 @@ class ShiftLegalizer
 
   bool legalize(DetailedMgr& mgr);
 
+  bool legalize2025(DetailedMgr& mgr);
+
  private:
   struct Clump;
 
@@ -31,6 +33,7 @@ class ShiftLegalizer
   double clump(std::vector<Node*>& order);
   void merge(Clump* r);
   bool violated(Clump* r, Clump*& l, int& dist);
+  void excludeCombCells();
 
   DetailedMgr* mgr_ = nullptr;
   Architecture* arch_ = nullptr;
@@ -44,6 +47,10 @@ class ShiftLegalizer
   std::vector<std::vector<int>> incoming_;
   std::vector<Node*> dummiesRight_;
   std::vector<Node*> dummiesLeft_;
+
+  std::vector<Node*> allCells_;
+  std::vector<Node*> movableCells_;
+  std::vector<Node*> fixedCells_;
 };
 
 }  // namespace dpl

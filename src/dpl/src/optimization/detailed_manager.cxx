@@ -1112,6 +1112,27 @@ void DetailedMgr::collectFixedCells()
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+void DetailedMgr::collectFFs()
+{
+  // Fixed cells are used only to create blockages which, in turn, are used to
+  // create obstacles.  Obstacles are then used to create the segments into
+  // which cells can be placed.
+
+  fixedCells_.clear();
+
+  // Insert fixed items, shapes AND macrocells.
+  for (int i = 0; i < network_->getNumNodes(); i++) {
+    Node* nd = network_->getNode(i);
+    if(!nd->isFF()) {
+      fixedCells_.push_back(nd);
+    }
+  }
+
+  logger_->info(DPL, 320, "Collected {:d} FF cells.", fixedCells_.size());
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 void DetailedMgr::collectWideCells()
 {
   // This is sort of a hack.  Some standard cells might be extremely wide and

@@ -106,6 +106,7 @@ class Node
   Type getType() const;
   bool isTerminal() const;
   bool isFiller() const;
+  bool isFF();
   bool isStdCell() const;
   bool isBlock() const;
   Group* getGroup() const;
@@ -177,6 +178,7 @@ class Node
   std::vector<Pin*> pins_;
   // used layers
   uint8_t used_layers_{0};
+  int is_ff_ = -1;
 };
 
 class Group
