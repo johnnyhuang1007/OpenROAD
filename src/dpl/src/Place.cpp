@@ -285,6 +285,7 @@ bool CellPlaceOrderLess::operator()(const Node* cell1, const Node* cell2) const
 
 void Opendp::place()
 {
+  std::cout<<"Do Detailed Placement."<<std::endl;
   vector<Node*> sorted_cells;
   sorted_cells.reserve(network_->getNumCells());
 
@@ -293,6 +294,8 @@ void Opendp::place()
       continue;
     }
     if (!(cell->isFixed() || cell->inGroup() || cell->isPlaced())) {
+      if(!cell->isFF())
+        continue;
       sorted_cells.push_back(cell.get());
       if (!grid_->cellFitsInCore(cell.get())) {
         logger_->error(DPL,

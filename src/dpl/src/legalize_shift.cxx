@@ -46,6 +46,7 @@ ShiftLegalizer::~ShiftLegalizer() = default;
 
 bool ShiftLegalizer::legalize2025(DetailedMgr& mgr)
 {
+
     return false;
 }
 
@@ -97,22 +98,39 @@ bool ShiftLegalizer::legalize(DetailedMgr& mgr)
   std::vector<Node*> cells;  // All movable cells.
   // Snap.
   if (!mgr.getSingleHeightCells().empty()) {
-    mgr.assignCellsToSegments(mgr.getSingleHeightCells());
+    std::vector<Node*> singleHeightFFs;
+    singleHeightFFs.reserve(mgr.getSingleHeightCells().size());
+    for (Node* ndi : mgr.getSingleHeightCells()) {
+      if(ndi->isFF()) {
+        singleHeightFFs.push_back(ndi);
+      }
+    }
+
+    mgr.assignCellsToSegments(singleHeightFFs);
 
     cells.insert(cells.end(),
-                 mgr.getSingleHeightCells().begin(),
-                 mgr.getSingleHeightCells().end());
+                 singleHeightFFs.begin(),
+                 singleHeightFFs.end());
   }
   for (size_t i = 2; i < mgr.getNumMultiHeights(); i++) {
     if (!mgr.getMultiHeightCells(i).empty()) {
-      mgr.assignCellsToSegments(mgr.getMultiHeightCells(i));
+      std::vector<Node*> multiHeightFFs;
+      multiHeightFFs.reserve(mgr.getMultiHeightCells(i).size());
+      for (Node* ndi : mgr.getMultiHeightCells(i)) {
+        if(ndi->isFF()) {
+          multiHeightFFs.push_back(ndi);
+        }
+      }
+      mgr.assignCellsToSegments(multiHeightFFs);
 
       cells.insert(cells.end(),
-                   mgr.getMultiHeightCells(i).begin(),
-                   mgr.getMultiHeightCells(i).end());
+                   multiHeightFFs.begin(),
+                   multiHeightFFs.end());
     }
   }
 
+  std::cout<< "Snap: " << cells.size() << " cells." << std::endl;
+  /*
   // Check for displacement after the snap.  Shouldn't be any.
   for (const Node* ndi : cells) {
     const DbuX dx = abs(ndi->getLeft() - origPos[ndi->getId()].first);
@@ -198,7 +216,7 @@ bool ShiftLegalizer::legalize(DetailedMgr& mgr)
 
     retval = false;
   }
-
+  */
   return retval;
 }
 //////////////////////////////////////////////////////////////////////////////

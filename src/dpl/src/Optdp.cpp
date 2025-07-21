@@ -82,6 +82,7 @@ void Opendp::improvePlacement(const int seed,
   // improvement.  If it errors or prints a warning when
   // given a legal placement, that likely means there is
   // a bug in my code somewhere.
+  std::cout << "Legalizing placement." << std::endl;
   ShiftLegalizer lg;
   lg.legalize(mgr);
 

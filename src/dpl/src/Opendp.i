@@ -26,6 +26,8 @@ detailed_placement_cmd(int max_displacment_x,
                        int max_displacment_y,
                        const char* report_file_name){
   dpl::Opendp *opendp = ord::OpenRoad::openRoad()->getOpendp();
+  std::cout << "Detailed placement with max displacement: "
+            << max_displacment_x << ", " << max_displacment_y << std::endl;
   opendp->detailedPlacement(max_displacment_x, max_displacment_y, std::string(report_file_name));
 }
 

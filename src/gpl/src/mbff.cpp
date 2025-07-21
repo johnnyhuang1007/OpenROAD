@@ -488,6 +488,8 @@ bool MBFF::IsValidFlop(dbInst* FF)
 
 bool MBFF::IsValidTray(dbInst* tray)
 {
+  
+  
   const sta::Cell* cell = network_->dbToSta(tray->getMaster());
   if (cell == nullptr) {
     return false;
@@ -502,7 +504,7 @@ bool MBFF::IsValidTray(dbInst* tray)
   if (base_cell->isClockGate() || resizer_->dontUse(base_cell)) {
     return false;
   }
-
+  int d = 0;
   int q = 0;
   int qn = 0;
   int scan = 0;
@@ -510,10 +512,21 @@ bool MBFF::IsValidTray(dbInst* tray)
   int preset = 0;
   int clear = 0;
   int clock = 0;
+  std::cout<< "Validating tray: " << tray->getName() << std::endl;
 
   for (dbITerm* iterm : tray->getITerms()) {
-    q += (IsQPin(iterm) && !IsInvertingQPin(iterm));
-    qn += (IsQPin(iterm) && IsInvertingQPin(iterm));
+    std::cout<< "Processing iterm: " << iterm->getName() << std::endl;
+    std::string pname = iterm->getName().substr(iterm->getName().find_last_of('/') + 1);
+    if(pname[0]=='Q')
+    {
+      if(pname.size() == 1) q += 1;
+      else if(pname[1] == 'N') qn += 1;        
+      else q += 1;
+      
+      //q += (IsQPin(iterm) && !IsInvertingQPin(iterm));
+      //qn += (IsQPin(iterm) && IsInvertingQPin(iterm));  might have some bug 
+    }
+    d += pname[0] == 'D';
     scan += (IsScanIn(iterm) || IsScanEnable(iterm));
     supply += (IsSupplyPin(iterm));
     preset += (IsPresetPin(iterm));
@@ -521,8 +534,14 @@ bool MBFF::IsValidTray(dbInst* tray)
     clock += (IsClockPin(iterm));
   }
 
+  std::cout<< "Tray: " << tray->getName() << std::endl;
+  std::cout<< "Q: " << q << ", QN: " << qn << std::endl;
+  std::cout<< "GetNumD(tray): "<< GetNumD(tray) << std::endl;
+  std::cout<< "d: " << d << std::endl;
+  
   // #D = max(q, qn)
-  return std::max(q, qn) >= 2 && GetNumD(tray) == std::max(q, qn)
+  //original D: //  GetNumD(tray) == std::max(q, qn)
+  return std::max(q, qn) >= 2 && d == std::max(q, qn)
          && clock + q + qn + scan + supply + preset + clear + std::max(q, qn)
                 == tray->getITerms().size();
 }
@@ -1338,6 +1357,10 @@ void MBFF::MinCostFlow(const std::vector<Flop>& flops,
                        const int sz,
                        std::vector<std::pair<int, int>>& clusters)
 {
+  std::cout<<"Run MinCostFlow with size: "<<sz<<std::endl;
+  std::cout<<"Number of flops: "<<flops.size()<<std::endl;
+  std::cout<<"Number of trays: "<<trays.size()<<std::endl;
+  std::cout<<"Number of clusters: "<<clusters.size()<<std::endl;
   const int num_flops = flops.size();
   const int num_trays = trays.size();
 
@@ -1464,6 +1487,7 @@ void MBFF::RunCapacitatedKMeans(const std::vector<Flop>& flops,
                                 std::vector<std::pair<int, int>>& cluster,
                                 const Mask& array_mask)
 {
+  std::cout<<"Run Capacitated K-Means with size: "<<sz<<std::endl;
   cluster.clear();
   const int num_flops = flops.size();
   const int rows = GetRows(sz, array_mask);
@@ -1780,6 +1804,9 @@ void MBFF::KMeansDecomp(const std::vector<Flop>& flops,
                         const int max_sz,
                         std::vector<std::vector<Flop>>& pointsets)
 {
+  std::cout<<"Run KMeansDecomp with size: "<<max_sz<<std::endl;
+  std::cout<<"Number of flops: "<<flops.size()<<std::endl;
+  std::cout<<"Number of points: "<<pointsets.size()<<std::endl;
   const int num_flops = flops.size();
   if (max_sz == -1 || num_flops <= max_sz) {
     pointsets.push_back(flops);
@@ -1797,6 +1824,7 @@ void MBFF::KMeansDecomp(const std::vector<Flop>& flops,
     }
   }
 
+  std::cout<<"KMeansDecomp rand_nums generated"<<std::endl;
 #pragma omp parallel for
   for (int k = 2; k <= 8; k++) {
     std::vector<std::vector<Flop>> k_clust;
@@ -1819,9 +1847,10 @@ void MBFF::KMeansDecomp(const std::vector<Flop>& flops,
 
   std::vector<std::vector<std::vector<Flop>>> tmp_clusters(multistart_);
   std::vector<float> tmp_costs(multistart_);
-
+  std::cout<<"do_kmeans multistart: "<<std::endl;
 #pragma omp parallel for
   for (int i = 0; i < multistart_; i++) {
+    
     KMeans(flops, best_k, tmp_clusters[i], rand_nums[i + 7]);
 
     /* cur_cost = sum of distances between flops and its
@@ -1836,6 +1865,7 @@ void MBFF::KMeansDecomp(const std::vector<Flop>& flops,
     tmp_costs[i] = cur_cost;
   }
 
+  std::cout<<"KMeansDecomp multistart done"<<std::endl;
   float best_cost = std::numeric_limits<float>::max();
   std::vector<std::vector<Flop>> k_means_ret;
   for (int i = 0; i < multistart_; i++) {
@@ -1849,7 +1879,7 @@ void MBFF::KMeansDecomp(const std::vector<Flop>& flops,
   create edges between all std::pairs of cluster centers
   edge weight = distance between the two centers
   */
-
+  std::cout<<"KMeansDecomp best_k: "<<best_k<<std::endl;
   std::vector<std::pair<float, std::pair<int, int>>> cluster_pairs;
   for (int i = 0; i < best_k; i++) {
     for (int j = i + 1; j < best_k; j++) {
@@ -1872,7 +1902,7 @@ void MBFF::KMeansDecomp(const std::vector<Flop>& flops,
     id[i] = i;
     sz[i] = k_means_ret[i].size();
   }
-
+  std::cout<<"KMeansDecomp id and sz initialized"<<std::endl;
   for (const auto& cluster_pair : cluster_pairs) {
     int idx1 = cluster_pair.second.first;
     int idx2 = cluster_pair.second.second;
@@ -1880,6 +1910,7 @@ void MBFF::KMeansDecomp(const std::vector<Flop>& flops,
     if (sz[id[idx1]] < sz[id[idx2]]) {
       std::swap(idx1, idx2);
     }
+    // lack power eval
     if (sz[id[idx1]] + sz[id[idx2]] > max_sz) {
       continue;
     }
@@ -1912,6 +1943,9 @@ void MBFF::KMeansDecomp(const std::vector<Flop>& flops,
       }
     }
   }
+  std::cout<<"KMeansDecomp done with size: "<<max_sz<<std::endl;
+  std::cout<<"Number of pointsets: "<<pointsets.size()<<std::endl;
+  std::cout<<"----------------------------"<<std::endl;
 }
 
 float MBFF::GetPairDisplacements()
@@ -2023,6 +2057,9 @@ float MBFF::RunClustering(const std::vector<Flop>& flops,
             all_final_trays[t].end(), cur_trays[i].begin(), cur_trays[i].end());
       }
     }
+    std::cout<<"Before ILP, pointset "<<t<<" has "
+             <<pointsets[t].size()<<" flops and "
+             <<all_final_trays[t].size()<<" trays"<<std::endl;
     std::vector<std::pair<int, int>> mapping(num_flops);
     const float cur_ans = RunILP(
         pointsets[t], all_final_trays[t], mapping, alpha, beta, array_mask);
@@ -2030,6 +2067,7 @@ float MBFF::RunClustering(const std::vector<Flop>& flops,
     ans += cur_ans;
   }
 
+  std::cout<<"ready to bank"<<std::endl;
   for (int t = 0; t < num_pointsets; t++) {
     ModifyPinConnections(
         pointsets[t], all_final_trays[t], all_mappings[t], array_mask);
@@ -2165,13 +2203,33 @@ void MBFF::Run(const int mx_sz, const float alpha, const float beta)
   const int num_chunks = FFs.size();
   float tot_ilp = 0;
   bool any_found = false;
+  std::cout<<"Number of chunks: " << num_chunks << std::endl;
   for (int i = 0; i < num_chunks; i++) {
     dbInst* ff_inst = insts_[FFs[i].back().idx];
+    std::cout<<"current FF info: "
+             << ff_inst->getMaster()->getName() << " "
+             << ff_inst->getName() << std::endl;
+    
     const Mask array_mask = GetArrayMask(ff_inst, false);
+    log_->report("Array mask: ");
+    log_->report("  func_idx: {}", array_mask.func_idx);
+    log_->report("  clk_polarity: {}", array_mask.clock_polarity);
+    log_->report("  has_clear: {}", array_mask.has_clear);
+    log_->report("  has_preset: {}", array_mask.has_preset);
+    log_->report("  pos_output: {}", array_mask.pos_output);
+    log_->report("  inv_output: {}", array_mask.inv_output);
+    log_->report("  is_scan_cell: {}", array_mask.is_scan_cell);
+    log_->report("");
+
+    log_->report("Processing group of {}", FFs[i].size());
+    log_->report("  flop instances containing {}", ff_inst->getMaster()->getName());
+    log_->report("best_master_size: {}", best_master_[array_mask].size());
+    log_->report("");
     // do we even have trays to cluster these flops?
     if (!best_master_[array_mask].size()) {
       tot_ilp += (alpha * FFs[i].size());
       tray_sizes_used_[1] += FFs[i].size();
+      log_->report("1");
       log_->info(GPL,
                  137,
                  "No tray found for group of {} flop instances containing {}",
@@ -2246,23 +2304,34 @@ Point MBFF::GetTrayCenter(const Mask& array_mask, const int idx)
 
 void MBFF::ReadLibs()
 {
+  std::cout<< "Reading libraries..." << std::endl;
   test_idx_ = 0;
   for (odb::dbLib* lib : db_->getLibs()) {
     for (dbMaster* master : lib->getMasters()) {
+      
       const std::string tray_name = "test_tray_" + std::to_string(test_idx_++);
       dbInst* tmp_tray = dbInst::create(block_, master, tray_name.c_str());
-
+      if(master->isSequential())
+      {
+        std::cout<<"Sequential master found: " << master->getName() << std::endl;
+        std::cout<< "Number of slots: " << GetNumD(tmp_tray) << std::endl;
+      }
       if (!IsValidTray(tmp_tray)) {
         dbInst::destroy(tmp_tray);
         --test_idx_;
         continue;
       }
-
+      std::cout<< "Valid tray: " << tmp_tray->getName() << std::endl;
+      
       const int num_slots = GetNumD(tmp_tray);
       if ((num_slots & (num_slots - 1)) != 0) {
         continue;  // non-power of 2 not supported
       }
+      std::cout<< "Processing master: " << master->getName() << std::endl;
       const int idx = GetBitIdx(num_slots);
+      std::cout<< "Number of slots: " << num_slots << std::endl;
+      std::cout<< "Tray index: " << idx << std::endl;
+      std::cout<< "idx: "<< idx << std::endl;
       const Mask array_mask = GetArrayMask(tmp_tray, true);
 
       debugPrint(log_,
@@ -2366,6 +2435,7 @@ void MBFF::ReadLibs()
 
 void MBFF::ReadFFs()
 {
+  std::cout<< "Reading flops..." << std::endl;
   int num_flops = 0;
   for (dbInst* inst : block_->getInsts()) {
     if (IsValidFlop(inst)) {
@@ -2377,6 +2447,7 @@ void MBFF::ReadFFs()
       num_flops++;
     }
   }
+  std::cout<< "Found " << num_flops << " flop instances." << std::endl;
   slot_disp_x_.resize(num_flops, 0.0);
   slot_disp_y_.resize(num_flops, 0.0);
 }
@@ -2384,6 +2455,7 @@ void MBFF::ReadFFs()
 // read num_paths_ timing-critical path pairs (FF-pair start/end points)
 void MBFF::ReadPaths()
 {
+  std::cout<< "Reading paths..." << std::endl;
   paths_.resize(flops_.size());
   std::vector<std::set<int>> unique(flops_.size());
 

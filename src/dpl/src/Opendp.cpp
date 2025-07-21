@@ -100,10 +100,9 @@ void Opendp::detailedPlacement(const int max_displacement_x,
     }
   }
 
-  if (have_fillers_) {
+  if (1 || have_fillers_) {
     logger_->warn(DPL, 37, "Use remove_fillers before detailed placement.");
   }
-
   if (max_displacement_x == 0 || max_displacement_y == 0) {
     // defaults
     max_displacement_x_ = 500;
@@ -115,6 +114,8 @@ void Opendp::detailedPlacement(const int max_displacement_x,
 
   odb::WireLengthEvaluator eval(block_);
   hpwl_before_ = eval.hpwl();
+
+  logger_->report("Activating detail placement");
   detailedPlacement();
   // Save displacement stats before updating instance DB locations.
   findDisplacementStats();
@@ -158,10 +159,10 @@ void Opendp::updateDbInstLocations()
 
 void Opendp::reportLegalizationStats() const
 {
-  logger_->report("Placement Analysis");
+  logger_->report("Placement Analysis"); 
   logger_->report("---------------------------------");
   logger_->report("total displacement   {:10.1f} u",
-                  block_->dbuToMicrons(displacement_sum_));
+                  block_->dbuToMicrons(displacement_sum_)); 
   logger_->metric("design__instance__displacement__total",
                   block_->dbuToMicrons(displacement_sum_));
   logger_->report("average displacement {:10.1f} u",

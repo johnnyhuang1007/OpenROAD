@@ -95,7 +95,7 @@ class MBFF
 	int GetRows(int slot_cnt, const Mask& array_mask);
 	int GetBitCnt(int bit_idx);
 	int GetBitIdx(int bit_cnt);
-
+	
 	// clock pin functions
 	bool IsClockPin(odb::dbITerm* iterm);
 	bool ClockOn(odb::dbInst* inst);

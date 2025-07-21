@@ -1128,7 +1128,7 @@ void DetailedMgr::collectFFs()
     }
   }
 
-  logger_->info(DPL, 320, "Collected {:d} FF cells.", fixedCells_.size());
+  logger_->info(DPL, 331, "Collected {:d} FF cells.", fixedCells_.size());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
