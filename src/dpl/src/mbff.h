@@ -8,6 +8,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <unordered_map>
 
 #include "dbuPoint.h"
 #include "db_sta/dbNetwork.hh"
@@ -157,8 +158,9 @@ class MBFF_solver
 
     //FlipFlop
     void initFFCells(std::vector<dpl::Node*>& FFCells) {this->FFCells = FFCells;}
+    void setFFPins();
     std::vector<dpl::Node*> FFCells;
-    
+    std::unordered_map<dpl::Pin*, std::string> PinsMap;
     
 
 };

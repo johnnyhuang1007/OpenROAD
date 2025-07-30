@@ -321,6 +321,7 @@ void Opendp::place()
   mbff.setSiteHeight(arch_->getRow(0)->getHeight());
   mbff.buildTileList(combCells, arch_.get());
   mbff.initFFCells(ffCells);
+  mbff.setFFPins();
   
   std::vector<std::pair<dbuPoint,int>> insertable;
   mbff.buildGridMap();
@@ -328,10 +329,9 @@ void Opendp::place()
   odb::dbMaster* minAreaMaster = mbff.getAreaFF(MBFFType::QFF, 1, MAX);
   insertable = mbff.getInsertable(minAreaMaster);
 
-  mbff.TopDownSplit();
+  //mbff.TopDownSplit();
   std::cout<<"GridMap built."<<std::endl;
-  call_tree(mbff.gMap_.header.get());
-  exit(0);
+  //call_tree(mbff.gMap_.header.get());
   
 
   if (have_multi_row_cells_) {

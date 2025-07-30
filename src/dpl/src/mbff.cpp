@@ -459,6 +459,23 @@ void MBFF_solver::TopDownSplit()
                   insert_y);
 }
 
+void MBFF_solver::setFFPins()
+{
+    for(auto& ff : FFCells)
+    {
+        std::string ffName = ff->name();
+        std::vector<Pin*> pins = ff->getPins();
+        for(auto& pin : pins)
+        {
+            std::string pinName = ffName + "/" + pin->getName();
+            std::cout<<"Name: "<<pinName<<std::endl;
+            PinsMap[pin] = pinName;
+        }
+
+    }
+    std::cout<<"FF Pins set."<<std::endl;
+}
+
     
 
 }
