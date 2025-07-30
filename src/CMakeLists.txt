@@ -34,6 +34,7 @@ set(OPENROAD_SOURCE
   Tech.cc
   OpenRoad.cc
   Main.cc
+  readTech.cpp
   )
 
 if(USE_SYSTEM_BOOST)

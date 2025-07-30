@@ -63,3 +63,7 @@ bazel-OpenROAD
 projectview.bazelproject
 .bsp/
 .bazelbsp/
+
+*.lef
+
+testcase*

@@ -95,6 +95,12 @@ void Opendp::detailedPlacement(const int max_displacement_x,
 {
   importDb();
   adjustNodesOrient();
+  for (auto& cell : network_->getNodes()) {
+    if (cell->getType() == Node::CELL && !cell->isFF()) {
+      cell->setFixed(true);
+    }
+  }
+
   for (const auto& node : network_->getNodes()) {
     if (node->getType() == Node::CELL && !node->isFixed()) {
       node->setPlaced(false);

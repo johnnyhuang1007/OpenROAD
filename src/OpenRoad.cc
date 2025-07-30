@@ -40,6 +40,7 @@
 #include "odb/lefin.h"
 #include "odb/lefout.h"
 #include "ord/InitOpenRoad.hh"
+#include "ord/readTech.h"
 #include "pad/MakeICeWall.h"
 #include "par/MakePartitionMgr.h"
 #include "pdn/MakePdnGen.hh"
@@ -156,6 +157,23 @@ void OpenRoad::init(Tcl_Interp* tcl_interp,
                     const bool batch_mode)
 {
   tcl_interp_ = tcl_interp;
+
+  // 啟用 Tcl stubs，讓你的擴充可以和不同版本 Tcl ABI 一致
+  if (Tcl_InitStubs(tcl_interp_, TCL_VERSION, 0) == NULL) {
+    throw std::runtime_error(
+        "Tcl_InitStubs failed: " + std::string(Tcl_GetStringResult(tcl_interp_)));
+        
+  }
+
+  // 註冊命令：Tcl 腳本呼叫 read_tech 時會執行 ReadTechCmd
+  Tcl_CreateObjCommand(tcl_interp_,
+                        "read_tech",    // Tcl 中的命令名稱
+                        ReadTechCmd,    // C++ 實作函式
+                        nullptr,        // clientData，不用就傳 nullptr
+                        nullptr);       // 刪除時回呼
+
+  // 選擇性：讓 Tcl pkg require "Readtech"
+  Tcl_PkgProvide(tcl_interp_, "Readtech", "1.0");
 
   // Make components.
   utl::Progress::setBatchMode(batch_mode);
