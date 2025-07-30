@@ -632,5 +632,22 @@ DbuY Pin::getPinHeight() const
 {
   return pinHeight_;
 }
+std::string Pin::getName() const
+{
+  return name_;
+}
+void Pin::setName(std::string name)
+{
+  name_ = name;
+}
+odb::dbMTerm* Pin::getDbMTerm() const 
+{
+  return db_owner_;
+}
+void Pin::setMTerm(odb::dbMTerm* mTerm)
+{
+  db_owner_ = mTerm;
+}
+
 
 }  // namespace dpl

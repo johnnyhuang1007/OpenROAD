@@ -701,6 +701,103 @@ dbMaster* dbMaster::getMaster(dbLib* lib_, uint dbid_)
   return (dbMaster*) lib->_master_tbl->getPtr(dbid_);
 }
 
+int dbMaster::getFFType()
+{
+  //if (ff_type_ != -1) {
+  //  return ff_type_;
+  //}
+  if(!isFF()) return -1;
+
+
+  _dbMaster* master = (_dbMaster*) this;
+  int ff_type_ = -1; // -1: not FF, 0: DFF, 1: QNFF, 2: DFF and QNFF, 3: QFF, 4: QNFF, 5: Q and QN
+  bool has_Q = false;
+  bool hasQN = false;
+  bool hasScan = false;
+  for (dbMTerm* mterm : getMTerms()) {
+    std::string n = mterm->getConstName();
+    if (n.rfind("QN") == 0) {               // 先看 QN
+      hasQN = true;
+    }
+    else if (n.rfind("Q") == 0) {           // 才看 Q
+      has_Q = true;
+    }
+
+    // --- Check Scan In (SI) ---
+    // 僅接受「恰好是 SI」或「SI0、SI1…」這類掃描腳
+    if ((n.rfind("SI") == 0 && std::isdigit(n[2]))) {
+      hasScan = true;
+    }
+  }
+  if(!hasScan)
+  {
+    if(has_Q && !hasQN) ff_type_ = 0;
+    if(!has_Q && hasQN) ff_type_ = 1;
+    if(has_Q && hasQN) ff_type_ = 2;
+  }
+  else
+  {
+    if(has_Q && !hasQN) ff_type_ = 3; // Q
+    if(!has_Q && hasQN) ff_type_ = 4; // QN
+    if(has_Q && hasQN) ff_type_ = 5; // Q and QN
+  }
+  return ff_type_;
+}
+
+
+int dbMaster::getBitCount()
+{
+  //if(bit_count_ != -1) {
+  //  return bit_count_;
+  //}
+  if(!isFF()) {
+    return 0;
+  }
+  _dbMaster* master = (_dbMaster*) this;
+  int bit_count_ = 0;
+  for (dbMTerm* mterm : getMTerms()) {
+    std::string mterm_name = mterm->getConstName();
+    if (mterm_name.rfind('D', 0) == 0) {
+      bit_count_++;
+    }
+  }
+  return bit_count_;
+}
+
+bool dbMaster::isFF()
+{
+  //if(is_ff_ != -1) {
+   // return is_ff_;
+  //}
+  _dbMaster* master = (_dbMaster*) this;
+  //if(!master->_flags._sequential)
+  //{
+  //   std::cout<< "Not FF " << std::endl;
+    //return false;
+  //}
+  bool has_Q = false;
+  bool has_D = false;
+  for (dbMTerm* mterm : getMTerms()) {
+    dbSigType sig_type = mterm->getSigType();
+    if (sig_type != dbSigType::SIGNAL && sig_type != dbSigType::CLOCK)
+      continue;
+    // 2. 只要名稱是 D*/Q* 就標記
+    std::string name = mterm->getConstName();
+    if (name.rfind('Q', 0) == 0)   // 以 'Q' 開頭
+      has_Q = true;
+    if (name.rfind('D', 0) == 0)   // 以 'D' 開頭
+      has_D = true;
+
+    if (has_Q && has_D) {
+
+      return true;
+    }
+  }
+
+  return false;
+
+}
+
 bool dbMaster::isFiller()
 {
   _dbMaster* master = (_dbMaster*) this;

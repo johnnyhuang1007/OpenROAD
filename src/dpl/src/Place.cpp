@@ -22,6 +22,8 @@
 #include "odb/dbTransform.h"
 #include "util/journal.h"
 #include "utl/Logger.h"
+#include "mbff.h"
+#include "dbuPoint.h"
 // #define ODP_DEBUG
 
 namespace dpl {
@@ -283,10 +285,16 @@ bool CellPlaceOrderLess::operator()(const Node* cell1, const Node* cell2) const
                             < 0)));
 }
 
+
+
 void Opendp::place()
 {
+
+  MBFF_solver mbff(db_,sta_,logger_,0,0,0);
   std::cout<<"Do Detailed Placement."<<std::endl;
   vector<Node*> sorted_cells;
+  vector<Node*> combCells;
+  vector<Node*> ffCells;
   sorted_cells.reserve(network_->getNumCells());
 
   for (auto& cell : network_->getNodes()) {
@@ -294,8 +302,11 @@ void Opendp::place()
       continue;
     }
     if (!(cell->isFixed() || cell->inGroup() || cell->isPlaced())) {
-      if(!cell->isFF())
-        continue;
+      if( cell->isFF()) {
+        ffCells.push_back(cell.get());
+      } else {
+        combCells.push_back(cell.get());
+      }
       sorted_cells.push_back(cell.get());
       if (!grid_->cellFitsInCore(cell.get())) {
         logger_->error(DPL,
@@ -306,10 +317,25 @@ void Opendp::place()
     }
   }
   sort(sorted_cells.begin(), sorted_cells.end(), CellPlaceOrderLess(core_));
+  mbff.setSiteWidth(grid_->getSiteWidth());
+  mbff.setSiteHeight(arch_->getRow(0)->getHeight());
+  mbff.buildTileList(combCells, arch_.get());
+  mbff.initFFCells(ffCells);
+  mbff.setFFPins();
+  
+  std::vector<std::pair<dbuPoint,int>> insertable;
+  mbff.buildGridMap();
 
-  // Place multi-row instances first.
+  odb::dbMaster* minAreaMaster = mbff.getAreaFF(MBFFType::QFF, 1, MAX);
+  insertable = mbff.getInsertable(minAreaMaster);
+
+  //mbff.TopDownSplit();
+  std::cout<<"GridMap built."<<std::endl;
+  //call_tree(mbff.gMap_.header.get());
+  
+
   if (have_multi_row_cells_) {
-    for (Node* cell : sorted_cells) {
+    for (Node* cell : ffCells) {
       if (isMultiRow(cell)) {
         debugPrint(logger_,
                    DPL,
@@ -323,13 +349,14 @@ void Opendp::place()
       }
     }
   }
-  for (Node* cell : sorted_cells) {
+  for (Node* cell : ffCells) {
     if (!isMultiRow(cell)) {
       if (!mapMove(cell)) {
         shiftMove(cell);
       }
     }
   }
+
 }
 
 void Opendp::placeGroups2()
@@ -552,6 +579,7 @@ bool Opendp::mapMove(Node* cell)
 
 bool Opendp::mapMove(Node* cell, const GridPt& grid_pt)
 {
+
   debugPrint(logger_,
              DPL,
              "place",
@@ -585,6 +613,7 @@ bool Opendp::mapMove(Node* cell, const GridPt& grid_pt)
 
 bool Opendp::shiftMove(Node* cell)
 {
+
   const GridPt grid_pt = legalGridPt(cell, true);
   // magic number alert
   const GridY boundary_margin{3};

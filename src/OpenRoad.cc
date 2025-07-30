@@ -227,7 +227,7 @@ void OpenRoad::init(Tcl_Interp* tcl_interp,
   initIoplacer(ioPlacer_, db_, logger_, tcl_interp);
   initReplace(
       replace_, db_, sta_, resizer_, global_router_, logger_, tcl_interp);
-  initOpendp(opendp_, db_, logger_, tcl_interp);
+  initOpendp(opendp_, db_, sta_, logger_, tcl_interp);
   initFinale(finale_, db_, logger_, tcl_interp);
   initGlobalRouter(global_router_,
                    db_,

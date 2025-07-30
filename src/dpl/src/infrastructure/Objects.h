@@ -16,6 +16,7 @@ class dbInst;
 class dbMaster;
 class dbOrientType;
 class dbSite;
+class dbMTerm;
 }  // namespace odb
 namespace dpl {
 
@@ -25,6 +26,7 @@ using odb::dbMaster;
 using odb::dbOrientType;
 using odb::dbSite;
 using odb::Rect;
+using odb::dbMTerm;
 
 class MasterEdge
 {
@@ -253,6 +255,11 @@ class Pin
   void setPinHeight(DbuY height);
   DbuY getPinHeight() const;
 
+  std::string getName() const;
+  void setName(std::string);
+  odb::dbMTerm* getDbMTerm() const ;
+  void setMTerm(odb::dbMTerm*);
+
  private:
   // Pin width and height.
   DbuX pinWidth_{0};
@@ -264,6 +271,8 @@ class Pin
   // Node and edge for pin.
   Node* node_{nullptr};
   Edge* edge_{nullptr};
+  std::string name_{""};
+  odb::dbMTerm* db_owner_{nullptr};
   // Offsets from cell center.
   DbuX offsetX_{0};
   DbuY offsetY_{0};

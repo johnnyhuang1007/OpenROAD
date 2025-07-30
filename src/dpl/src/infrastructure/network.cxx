@@ -73,7 +73,10 @@ Pin* Network::addPin(odb::dbITerm* term)
   upin->setOffsetY(DbuY{dy});
   upin->setPinHeight(DbuY{hh});
   upin->setPinWidth(DbuX{ww});
+  upin->setName(mTerm->getName());
+  upin->setMTerm(mTerm);
   upin->setPinLayer(0);  // Set to zero since not currently used.
+
   pins_.emplace_back(std::move(upin));
 
   auto node = getNode(term->getInst());

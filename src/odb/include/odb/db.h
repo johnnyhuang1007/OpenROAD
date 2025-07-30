@@ -5511,6 +5511,12 @@ class dbMaster : public dbObject
   int64_t getArea() const;
 
   ///
+  /// is FF cells
+  ///
+  bool isFF();
+  int getBitCount();
+  int getFFType();
+  ///
   /// is filler cell
   ///
   bool isFiller();
@@ -5708,6 +5714,12 @@ class dbMaster : public dbObject
   /// Returns nullptr if no site has been set.
   ///
   dbSite* getSite();
+
+  ///
+  ///
+  /// Bit count of this master (if it is FF)
+  ///
+  
 
   ///
   /// Returns a database unique id for this master.
