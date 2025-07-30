@@ -21,7 +21,9 @@
 namespace utl {
 class Logger;
 }
-
+namespace sta {
+class dbSta;
+}
 namespace dpl {
 
 using utl::Logger;
@@ -35,6 +37,8 @@ using odb::dbTechLayer;
 using odb::Point;
 using odb::Rect;
 
+using sta::dbSta;
+
 class Node;
 class Group;
 class Master;
@@ -42,6 +46,7 @@ class Edge;
 
 class Architecture;
 class Network;
+class MBFF;
 struct Pixel;
 
 class DplObserver;
@@ -94,7 +99,7 @@ class Opendp
   void legalCellPos(dbInst* db_inst);  // call from rsz
   void initMacrosAndGrid();            // call from rsz
 
-  void init(dbDatabase* db, Logger* logger);
+  void init(dbDatabase* db, dbSta* sta, Logger* logger);
   // legalize/report
   // max_displacment is in sites. use zero for defaults.
   void detailedPlacement(int max_displacement_x,
@@ -313,6 +318,7 @@ class Opendp
 
   Logger* logger_ = nullptr;
   dbDatabase* db_ = nullptr;
+  dbSta* sta_ = nullptr;
   dbBlock* block_ = nullptr;
   odb::Rect core_;
 

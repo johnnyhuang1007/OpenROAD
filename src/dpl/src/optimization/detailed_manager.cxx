@@ -1110,6 +1110,23 @@ void DetailedMgr::collectFixedCells()
   logger_->info(DPL, 320, "Collected {:d} fixed cells.", fixedCells_.size());
 }
 
+
+void DetailedMgr::collectCombs()
+{
+  // Collect combinational cells.  These are cells which are not terminals,
+  // not fixed, and not macrocells.
+
+  fixedCells_.clear();
+  for (int i = 0; i < network_->getNumNodes(); i++) {
+    Node* nd = network_->getNode(i);
+
+    if (!nd->isFF()) {
+      fixedCells_.push_back(nd);
+    }
+  }
+
+  logger_->info(DPL, 343, "Collected {:d} combinational cells.", fixedCells_.size());
+}
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 void DetailedMgr::collectFFs()

@@ -29,6 +29,7 @@ void deleteOpendp(dpl::Opendp* opendp)
 
 void initOpendp(dpl::Opendp* dpl,
                 odb::dbDatabase* db,
+                sta::dbSta* sta,
                 utl::Logger* logger,
                 Tcl_Interp* tcl_interp)
 {
@@ -36,7 +37,7 @@ void initOpendp(dpl::Opendp* dpl,
   Dpl_Init(tcl_interp);
   // Eval encoded sta TCL sources.
   utl::evalTclInit(tcl_interp, dpl::dpl_tcl_inits);
-  dpl->init(db, logger);
+  dpl->init(db, sta, logger);
 }
 
 }  // namespace dpl

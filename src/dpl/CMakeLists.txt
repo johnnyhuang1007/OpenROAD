@@ -1,5 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2018-2025, The OpenROAD Authors
+set(OPENSTA_INCS ${PROJECT_SOURCE_DIR}/sta/include)
+set(DBSTA_INCS ${PROJECT_SOURCE_DIR}/dbSta/include)
+get_target_property(OPENSTA_INCS OpenSTA INTERFACE_INCLUDE_DIRECTORIES)
+get_target_property(DBSTA_INCS dbSta INTERFACE_INCLUDE_DIRECTORIES)
 
 include("openroad")
 find_package(TCL)
@@ -21,6 +25,7 @@ add_library(dpl_lib
   src/CheckPlacement.cpp
   src/infrastructure/Objects.cpp
   src/infrastructure/Padding.cpp
+  src/infrastructure/Tile.cpp
   src/Place.cpp
   src/FillerPlacement.cpp
   src/DecapPlacement.cpp
@@ -45,6 +50,9 @@ add_library(dpl_lib
   src/optimization/detailed_random.cxx
   src/optimization/detailed_orient.cxx
   src/util/journal.cxx
+
+  src/mbff.cpp
+  src/gridMap.cpp
 )
 
 target_link_libraries(dpl_lib
@@ -52,12 +60,15 @@ target_link_libraries(dpl_lib
     odb
   PRIVATE
     utl_lib
+    OpenSTA
 )
 
 target_include_directories(dpl_lib
   PUBLIC
     include
     ${LEMON_INCLUDE_DIRS}
+    ${OPENSTA_INCS}
+    ${DBSTA_INCS}
   PRIVATE
     src
 )
@@ -73,6 +84,8 @@ target_sources(dpl
 target_include_directories(dpl
   PUBLIC
     include
+    ${OPENSTA_INCS}
+    ${DBSTA_INCS}
   PRIVATE
     src
 )
@@ -82,6 +95,7 @@ target_link_libraries(dpl
     ${TCL_LIBRARY}
     dpl_lib
     gui
+    OpenSTA
 )
 
 messages(
@@ -113,6 +127,7 @@ if (Python3_FOUND AND BUILD_PYTHON)
       dpl_lib
       gui
       odb
+      OpenSTA
   )
 
 endif()

@@ -9,6 +9,10 @@ namespace odb {
 class dbDatabase;
 }
 
+namespace sta {
+class dbSta;
+}
+
 namespace utl {
 class Logger;
 }
@@ -20,6 +24,7 @@ class Opendp;
 dpl::Opendp* makeOpendp();
 void initOpendp(dpl::Opendp* dpl,
                 odb::dbDatabase* db,
+                sta::dbSta* sta,
                 utl::Logger* logger,
                 Tcl_Interp* tcl_interp);
 void deleteOpendp(dpl::Opendp* opendp);

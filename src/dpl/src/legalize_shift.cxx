@@ -71,8 +71,9 @@ bool ShiftLegalizer::legalize(DetailedMgr& mgr)
   network_ = mgr_->getNetwork();
 
   // Categorize the cells and create the different segments.
-  //mgr.collectFixedCells();
+  mgr.collectFixedCells();  //original one
   mgr.collectFFs();
+  //mgr.collectCombs();
   mgr.collectSingleHeightCells();
   mgr.collectMultiHeightCells();
   mgr.collectWideCells();    // XXX: This requires segments!
