@@ -33,9 +33,30 @@ set(OPENROAD_SOURCE
   Timing.cc
   Tech.cc
   OpenRoad.cc
-  Main.cc
   readTech.cpp
   )
+
+# ------------------------------------------------------------------
+# 根據 ENABLE_RELEASE 變數來設定特定模式的旗標
+# ------------------------------------------------------------------
+if(ENABLE_RELEASE)
+  # === Release 模式設定 ===
+  message(STATUS "Build mode: Release with -O3")
+  # 附加 Release 專用的旗標
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG")
+
+  set(OPENROAD_SOURCE ${OPENROAD_SOURCE} ReleaseMain.cpp)
+  set(BUILD_PYTHON OFF)
+  set(BUILD_GUI OFF)
+else()
+  # === Debug 模式設定 ===
+  message(STATUS "Build mode: Debug with -g")
+  # 附加 Debug 專用的旗標
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
+
+  set(OPENROAD_SOURCE ${OPENROAD_SOURCE} Main.cc)
+endif()
+
 
 if(USE_SYSTEM_BOOST)
   set(Boost_USE_STATIC_LIBS OFF)

@@ -51,6 +51,9 @@ option(TSAN "Enable Thread Sanitizer" OFF)
 # Allow enabling address sanitizer
 option(UBSAN "Enable Undefined Behavior Sanitizer" OFF)
 
+# 是否使用發行版本 (比賽用版本)
+option(ENABLE_RELEASE "Enable Release Version" OFF)
+
 project(OpenROAD VERSION 1
   LANGUAGES CXX
 )
