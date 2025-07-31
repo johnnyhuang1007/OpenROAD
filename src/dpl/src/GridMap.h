@@ -82,14 +82,15 @@ struct GridMap
     void setFFNodes(std::vector<dpl::Node*>& FF_nodes);
 
     void TopDownSplit(tileGrid* grid,
-                  std::vector<Node*> FF_x,
-                  std::vector<Node*> FF_y,
-                  std::vector<insertable> insert_x,
-                  std::vector<insertable> insert_y);
+                  std::vector<Node*> FFs,
+                  std::vector<insertable> inserts);
 
 };
 
 void call_tree(tileGrid*);
+
+dpl::dbuPoint median(std::vector<dpl::Node*>&, bool(*)(Node*,Node*));
+std::vector<insertable> splitByCoordX(insertable, double);
 
 }
 

@@ -118,93 +118,118 @@ void GridMap::addInsertableTile(std::vector<insertable>& inserts)
         header->valid_spaces.end(), inserts.begin(), inserts.end());
 }
 
+dbuPoint median(std::vector<Node*> inputs, bool(*compare)(Node* a, Node* b))
+{
+    sort(inputs.begin(), inputs.end(), compare);
+    int half_index1 = inputs.size()/2;
+    int half_index2 = inputs.size()2 + (inputs.size()+1)%2;
+
+    dbuPoint ret;
+    ret.x = (inputs[half_index1]->getLeft()/2.0 + inputs[half_index2]->getLeft()/2.0 );
+    ret.y = (inputs[half_index1]->getTop()/2.0 + inputs[half_index2]->getTop()/2.0 );
+
+    return ret;
+}
+
+std::vector<insertable> splitByCoordX(insertable inst, double splitPoint)
+{
+    int width = inst.tile.width_/inst.count;
+    if(inst.count < 2) return std::vector<insertable>{inst};
+
+    double leftRegionWidth = splitPoint - inst.tile.x_;
+    if(inst.count - cell(leftRegionWidth / width) < 1) return std::vector<insertable>{inst};
+    
+    int leftCount = cell(leftRegionWidth / width);
+    std::vector<insertable> ret(2);
+    ret[0].count = leftCount;
+    ret[1].count = inst.count - leftCount;
+
+    ret[0].tile.x_ = inst.tile.x_;
+    ret[0].tile.y_ = inst.tile.y_;
+    ret[0].tile.width_ = leftCount*width;
+    ret[0].tile.height_ = inst.tile.height_;
+    ret[0].type = inst.type;
+
+    ret[1].tile.x_ = inst.tile.x_ + ret[0].count * width;
+    ret[1].tile.y_ = inst.tile.y_;
+    ret[1].tile.width_ = ret[1].count*width;
+    ret[1].tile.height_ = inst.tile.height_;
+    ret[1].type = inst.type;
+
+    return ret;
+}
+
 int c = 0;
 void GridMap::TopDownSplit(tileGrid* grid,
-                  std::vector<Node*> FF_x,
-                  std::vector<Node*> FF_y,
-                  std::vector<insertable> insert_x,
-                  std::vector<insertable> insert_y)
+                  std::vector<Node*> FFs,
+                  std::vector<insertable> inserts)
 {
+
+
+
     if(FF_x.size() < 32)
     {
-        grid->FF_nodes.insert(grid->FF_nodes.end(), FF_x.begin(), FF_x.end());
+        grid->FF_nodes.insert(grid->FF_nodes.end(), FFs.begin(), FFs.end());
         grid->valid_spaces.insert(grid->valid_spaces.end(),
-                                  insert_x.begin(),
-                                  insert_x.end());
+                                  inserts.begin(),
+                                  inserts.end());
         c++;
-        std::cout<<"Count: "<<c<<", FF_x size: "<<FF_x.size()<<", Insert_x size: "
-                 <<insert_x.size()<<std::endl;
+        std::cout<<"Count: "<<c<<", FF_x size: "<<FFs.size()<<", Insert_x size: "
+                 <<inserts.size()<<std::endl;
         return;
     }
+
+    std::vector<Node*> subFFs[2][2];
+    std::vector<insertable> subInserts[2][2];
     
     int half_x_idx = FF_x.size() / 2;
     int half_y_idx = FF_y.size() / 2;
-    double half_x = FF_x[half_x_idx]->getLeft().v /2.0 + FF_x[half_x_idx+1]->getLeft().v / 2.0;
-    double half_y = FF_y[half_y_idx]->getBottom().v /2.0 + FF_y[half_y_idx+1]->getBottom().v / 2.0;
-    double boundLeft = grid->x_;
-    double boundBottom = grid->y_;
-    double boundRight = grid->x_ + grid->width_;
-    double boundTop = grid->y_ + grid->height_;
 
-    std::cout<<"Splitting TileGrid: ("<<grid->x_<<", "<<grid->y_<<") to ("
-              <<grid->x_ + grid->width_<<", "<<grid->y_ + grid->height_<<")"<<std::endl;
-    std::cout<<"Half X: "<<half_x<<", Half Y: "<<half_y<<std::endl;
-    std::cout<<"Bound: ("<<boundLeft<<", "<<boundBottom<<") to ("
-              <<boundRight<<", "<<boundTop<<")"<<std::endl;
-
-    std::cout<<"FF_x size: "<<FF_x.size()<<", FF_y size: "<<FF_y.size()<<std::endl;
-    std::cout<<"Insert_x size: "<<insert_x.size()<<", Insert_y size: "<<insert_y.size()<<std::endl;
-
-    grid->descendants[0][0] = std::unique_ptr<tileGrid>(new tileGrid);
-    grid->descendants[0][1] = std::unique_ptr<tileGrid>(new tileGrid);
-    grid->descendants[1][0] = std::unique_ptr<tileGrid>(new tileGrid);
-    grid->descendants[1][1] = std::unique_ptr<tileGrid>(new tileGrid);
-    grid->descendants[0][0]->parent = grid;
-    grid->descendants[0][1]->parent = grid;
-    grid->descendants[1][0]->parent = grid;
-    grid->descendants[1][1]->parent = grid;
-
-    grid->descendants[0][0]->x_ = boundLeft;
-    grid->descendants[0][0]->y_ = boundBottom;
-    grid->descendants[0][0]->width_ = grid->width_/2.0;
-    grid->descendants[0][0]->height_ = grid->height_/2.0;
-
-    grid->descendants[0][1]->x_ = boundLeft;
-    grid->descendants[0][1]->y_ = half_y;
-    grid->descendants[0][1]->width_ = grid->width_/2.0;
-    grid->descendants[0][1]->height_ = grid->height_/2.0;
-
-    grid->descendants[1][0]->x_ = half_x;
-    grid->descendants[1][0]->y_ = boundBottom;
-    grid->descendants[1][0]->width_ = grid->width_/2.0;
-    grid->descendants[1][0]->height_ = grid->height_/2.0;
-
-    grid->descendants[1][1]->x_ = half_x;
-    grid->descendants[1][1]->y_ = half_y;
-    grid->descendants[1][1]->width_ = grid->width_/2.0;
-    grid->descendants[1][1]->height_ = grid->height_/2.0;
-
-
-    TopDownSplit(grid->descendants[0][0].get(), {FF_x.begin(), FF_x.begin() + half_x_idx},
-                 {FF_y.begin(), FF_y.begin() + half_y_idx},
-                 {insert_x.begin(), insert_x.begin() + half_x_idx},
-                 {insert_y.begin(), insert_y.begin() + half_y_idx}); 
+    double half_x = median(FFs,[](Node* a, Node* b)
+                                {
+                                    return a->getLeft() < b->getLeft();
+                                }).x;
+    double half_y = median(FFs,[](Node* a, Node* b)
+                                {
+                                    return a->getTop() < b.getTop();
+                                }).y;
     
-    TopDownSplit(grid->descendants[0][1].get(), {FF_x.begin() + half_x_idx, FF_x.end()},
-                 {FF_y.begin(), FF_y.begin() + half_y_idx},
-                 {insert_x.begin() + half_x_idx, insert_x.end()},   
-                 {insert_y.begin(), insert_y.begin() + half_y_idx});
-    
-    TopDownSplit(grid->descendants[1][0].get(), {FF_x.begin(), FF_x.begin() + half_x_idx},
-                {FF_y.begin() + half_y_idx, FF_y.end()},
-                {insert_x.begin(), insert_x.begin() + half_x_idx},
-                {insert_y.begin() + half_y_idx, insert_y.end()});
+    double x_seq[3] = {grid->x_,half_x,grid->x_ + grid->width_};
+    double y_seq[3] = {grid->y_,half_y,grid->y_ + grid->height_};
 
-    TopDownSplit(grid->descendants[1][1].get(), {FF_x.begin() + half_x_idx, FF_x.end()},
-                {FF_y.begin() + half_y_idx, FF_y.end()},
-                {insert_x.begin() + half_x_idx, insert_x.end()},
-                {insert_y.begin() + half_y_idx, insert_y.end()});
+    for(int i = 0 ; i < FFs.size() ; i++)
+    {
+        int x_idx = FFs[i]->getLeft() >= half_x;
+        int y_idx = FFs[j]->getBottom() >= half_y;
+        subFFs[x_idx][y_idx].push_back(FFs[i]);
+    }
 
+    for(int i = 0 ; i < inserts.size() ; i++)
+    {
+        std::vector<insertable> splitInst = splitByCoordX(inserts[i],half_x);
+        for(int j = 0 ; j < splitInst.size() ; j++)
+        {
+            int x_idx = splitInst[j]->getLeft() >= half_x;
+            int y_idx = splitInst[j]->getBottom() >= half_y;
+            subInserts[x_idx][y_idx].push_back(splitInst[j]);
+        }
+    }
+
+    for(int i = 0 ; i < 2 ; i++)
+    {
+        for(int j = 0 ; j < 2 ; j++)
+        {
+            grid->descendants[i][j] = std::unique_ptr<tileGrid>(new tileGrid);
+            grid->descendants[i][j]->parent = grid;
+            grid->descendants[i][j]->x_ = x_seq[i];
+            grid->descendants[i][j]->y_ = y_seq[j];
+            grid->descendants[i][j]->width_ = x_seq[i+1] - x_seq[i];
+            grid->descendants[i][j]->height_ = y_seq[j+1] - y_seq[j];  
+            TopDownSplit(grid->descendants[i][j].get(),
+                         subFFs[i][j],
+                         subInserts[i][j]);          
+        }
+    }
 
 }
 
