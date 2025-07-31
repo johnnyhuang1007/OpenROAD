@@ -89,7 +89,7 @@ struct GridMap
 
 void call_tree(tileGrid*);
 
-dpl::dbuPoint median(std::vector<dpl::Node*>&, bool(*)(Node*,Node*));
+dpl::dbuPoint median(std::vector<Node*> inputs, bool(*compare)(Node* a, Node* b));
 std::vector<insertable> splitByCoordX(insertable, double);
 
 }

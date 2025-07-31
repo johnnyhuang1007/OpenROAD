@@ -122,7 +122,7 @@ dbuPoint median(std::vector<Node*> inputs, bool(*compare)(Node* a, Node* b))
 {
     sort(inputs.begin(), inputs.end(), compare);
     int half_index1 = inputs.size()/2;
-    int half_index2 = inputs.size()2 + (inputs.size()+1)%2;
+    int half_index2 = inputs.size()/2 + (inputs.size()+1)%2;
 
     dbuPoint ret;
     ret.x = (inputs[half_index1]->getLeft()/2.0 + inputs[half_index2]->getLeft()/2.0 );
@@ -133,26 +133,26 @@ dbuPoint median(std::vector<Node*> inputs, bool(*compare)(Node* a, Node* b))
 
 std::vector<insertable> splitByCoordX(insertable inst, double splitPoint)
 {
-    int width = inst.tile.width_/inst.count;
+    int width = inst.tile.width_.v/inst.count;
     if(inst.count < 2) return std::vector<insertable>{inst};
 
-    double leftRegionWidth = splitPoint - inst.tile.x_;
-    if(inst.count - cell(leftRegionWidth / width) < 1) return std::vector<insertable>{inst};
+    double leftRegionWidth = splitPoint - inst.tile.x_.v;
+    if(inst.count - std::ceil(leftRegionWidth / width) < 1) return std::vector<insertable>{inst};
     
-    int leftCount = cell(leftRegionWidth / width);
+    int leftCount = std::ceil(leftRegionWidth / width);
     std::vector<insertable> ret(2);
     ret[0].count = leftCount;
     ret[1].count = inst.count - leftCount;
 
     ret[0].tile.x_ = inst.tile.x_;
     ret[0].tile.y_ = inst.tile.y_;
-    ret[0].tile.width_ = leftCount*width;
+    ret[0].tile.width_ = DbuX(leftCount*width);
     ret[0].tile.height_ = inst.tile.height_;
     ret[0].type = inst.type;
 
     ret[1].tile.x_ = inst.tile.x_ + ret[0].count * width;
     ret[1].tile.y_ = inst.tile.y_;
-    ret[1].tile.width_ = ret[1].count*width;
+    ret[1].tile.width_ = DbuX(ret[1].count*width);
     ret[1].tile.height_ = inst.tile.height_;
     ret[1].type = inst.type;
 
@@ -167,14 +167,14 @@ void GridMap::TopDownSplit(tileGrid* grid,
 
 
 
-    if(FF_x.size() < 32)
+    if(FFs.size() < 32)
     {
         grid->FF_nodes.insert(grid->FF_nodes.end(), FFs.begin(), FFs.end());
         grid->valid_spaces.insert(grid->valid_spaces.end(),
                                   inserts.begin(),
                                   inserts.end());
         c++;
-        std::cout<<"Count: "<<c<<", FF_x size: "<<FFs.size()<<", Insert_x size: "
+        std::cout<<"Count: "<<c<<", FFs size: "<<FFs.size()<<", Insert_x size: "
                  <<inserts.size()<<std::endl;
         return;
     }
@@ -182,17 +182,16 @@ void GridMap::TopDownSplit(tileGrid* grid,
     std::vector<Node*> subFFs[2][2];
     std::vector<insertable> subInserts[2][2];
     
-    int half_x_idx = FF_x.size() / 2;
-    int half_y_idx = FF_y.size() / 2;
+
 
     double half_x = median(FFs,[](Node* a, Node* b)
                                 {
                                     return a->getLeft() < b->getLeft();
-                                }).x;
+                                }).x.v;
     double half_y = median(FFs,[](Node* a, Node* b)
                                 {
-                                    return a->getTop() < b.getTop();
-                                }).y;
+                                    return a->getBottom() < b->getBottom();
+                                }).y.v;
     
     double x_seq[3] = {grid->x_,half_x,grid->x_ + grid->width_};
     double y_seq[3] = {grid->y_,half_y,grid->y_ + grid->height_};
@@ -200,7 +199,7 @@ void GridMap::TopDownSplit(tileGrid* grid,
     for(int i = 0 ; i < FFs.size() ; i++)
     {
         int x_idx = FFs[i]->getLeft() >= half_x;
-        int y_idx = FFs[j]->getBottom() >= half_y;
+        int y_idx = FFs[i]->getBottom() >= half_y;
         subFFs[x_idx][y_idx].push_back(FFs[i]);
     }
 
@@ -209,8 +208,8 @@ void GridMap::TopDownSplit(tileGrid* grid,
         std::vector<insertable> splitInst = splitByCoordX(inserts[i],half_x);
         for(int j = 0 ; j < splitInst.size() ; j++)
         {
-            int x_idx = splitInst[j]->getLeft() >= half_x;
-            int y_idx = splitInst[j]->getBottom() >= half_y;
+            int x_idx = splitInst[j].tile.getLeft() >= half_x;
+            int y_idx = splitInst[j].tile.getBottom() >= half_y;
             subInserts[x_idx][y_idx].push_back(splitInst[j]);
         }
     }

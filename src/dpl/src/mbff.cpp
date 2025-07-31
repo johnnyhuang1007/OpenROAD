@@ -430,33 +430,9 @@ void MBFF_solver::buildGridMap()
 
 void MBFF_solver::TopDownSplit()
 {
-    std::vector<Node*> FF_x = FFCells;
-    std::vector<Node*> FF_y = FFCells;
-    std::vector<insertable> insert_x = insertableCache;
-    std::vector<insertable> insert_y = insertableCache;
-
-    std::sort(FF_x.begin(),
-              FF_x.end(),
-              [](Node* a, Node* b) { return a->getLeft() < b->getLeft(); });
-    std::sort(FF_y.begin(),
-              FF_y.end(),
-              [](Node* a, Node* b) { return a->getBottom() < b->getBottom(); });
-    std::sort(insert_x.begin(),
-              insert_x.end(),
-              [](const insertable& a, const insertable& b) {
-                  return a.tile.getLeft() < b.tile.getLeft();
-              });
-    std::sort(insert_y.begin(),
-              insert_y.end(), 
-              [](const insertable& a, const insertable& b) {
-                  return a.tile.getBottom() < b.tile.getBottom();
-              });
-
     gMap_.TopDownSplit(gMap_.header.get(),
-                  FF_x,
-                  FF_y,
-                  insert_x,
-                  insert_y);
+                  FFCells,
+                  insertableCache);
 }
 
 void MBFF_solver::setFFPins()
