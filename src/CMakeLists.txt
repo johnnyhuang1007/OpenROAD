@@ -36,33 +36,41 @@ set(OPENROAD_SOURCE
   readTech.cpp
   )
 
+
 # ------------------------------------------------------------------
 # 根據 ENABLE_RELEASE 變數來設定特定模式的旗標
 # ------------------------------------------------------------------
 if(ENABLE_RELEASE)
-  # === Release 模式設定 ===
-  message(STATUS "Build mode: Release with -O3")
-  # 附加 Release 專用的旗標
+  # === Release 模式設定：完全靜態連結 ===
+  message(STATUS "Build mode: Release with -O3 (Fully Static Linking)")
+
+  # 1. 强制所有 add_library() 指令建立靜態函式庫 (.a)
+  set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
+
+  # 2. 告訴 find_package() 優先尋找靜態函式庫 (.a)
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ${CMAKE_FIND_LIBRARY_SUFFIXES})
+
+  # 3. 明確要求使用 Boost 的靜態版本
+  set(Boost_USE_STATIC_LIBS ON)
+  
+  # 4. 附加 Release 專用的編譯旗標
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG")
 
-  set(OPENROAD_SOURCE ${OPENROAD_SOURCE} ReleaseMain.cpp)
-  set(BUILD_PYTHON OFF)
-  set(BUILD_GUI OFF)
+  # 5. 【最關鍵】設定連結器旗標 -static
+  #    這個旗標會告訴連結器(linker)不要使用任何共享函式庫(.so)，
+  #    並將所有需要的函式庫從靜態歸檔(.a)中連結進來。
+  #    它涵蓋了 -static-libstdc++ 的功能，所以我們只需要這一個。
+  set(CMAKE_EXE_LINKER_FLAGS "-static")
+
 else()
-  # === Debug 模式設定 ===
-  message(STATUS "Build mode: Debug with -g")
-  # 附加 Debug 專用的旗標
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
-
-  set(OPENROAD_SOURCE ${OPENROAD_SOURCE} Main.cc)
-endif()
-
-
-if(USE_SYSTEM_BOOST)
+  # === Debug 模式設定：動態連結 ===
+  message(STATUS "Build mode: Debug with -g (Dynamic Linking)")
   set(Boost_USE_STATIC_LIBS OFF)
-else()
-  set(Boost_USE_STATIC_LIBS ON)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
 endif()
+# --- END: 模式設定結束 ---
+
+
 
 if(USE_SYSTEM_OPENSTA)
   if(NOT OPENSTA_LIBRARY)

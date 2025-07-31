@@ -1,6 +1,7 @@
 // src/main.cpp
 #include <iostream>
 #include <string>
+#include <fstream>
 #include <vector>
 #include <map>
 #include <algorithm> // for std::find
@@ -19,6 +20,7 @@ using std::endl;
 using std::string;
 using std::vector;
 using std::map;
+using std::ofstream;
 
 // 函式：用於顯示如何執行程式
 void print_usage(const char* prog_name) {
@@ -169,21 +171,32 @@ int main(int argc, char **argv) {
     // 4. 執行設計流程 & 產生報告 (Run Flow & Generate Reports)
     // =================================================================
     
-    cout << "Generating reports..." << endl;
-    string report_command = "redirect " + outputName + ".list {";
-    report_command += "report_tns; ";
-    report_command += "report_power; ";
-    report_command += "report_design_area";
-    report_command += "}";
-    eval(report_command);
+    // cout << "Generating reports..." << endl;
+    // string report_command = "redirect " + outputName + ".list {";
+    // report_command += "report_tns; ";
+    // report_command += "report_power; ";
+    // report_command += "report_design_area";
+    // report_command += "}";
+    // eval(report_command);
 
 
-    // 5. 寫出輸出檔案 (Writing Output Files)
+    // detailed placement
+    cout << "Running detailed placement..." << endl;
+    eval("detailed_placement");
+
+    // 6. 寫出輸出檔案 (Writing Output Files)
     // =================================================================
     cout << "Writing output files..." << endl;
     
     eval("write_def " + outputName + ".def");
     eval("write_verilog " + outputName + ".v");
+
+    ofstream list_file(outputName + ".list");
+    if (!list_file.is_open()) {
+        cerr << "Error: Unable to open output file: " << outputName << ".list" << endl;
+        return 1;
+    }
+    list_file.close();
 
     cout << "\nFlow completed successfully!" << endl;
     cout << "Outputs generated: " << endl;
