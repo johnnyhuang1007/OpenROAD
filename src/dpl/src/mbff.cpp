@@ -454,4 +454,98 @@ void MBFF_solver::setFFPins()
 
     
 
+
+
+void MBFF_solver::generatePinMapping(const std::string& output_filename)
+{
+    std::ofstream output_file(output_filename);
+    if (!output_file.is_open()) {
+        std::cerr << "Error: Cannot open output file " << output_filename << std::endl;
+        return;
+    }
+    
+    std::set<std::string> mapped_instances;
+    std::vector<std::string> mapping_lines;
+    
+    for (const auto& pin_entry : PinsMap) {
+        dpl::Pin* original_pin = pin_entry.first;
+        std::string original_pin_name = pin_entry.second; // Format : "FFname/PinName"
+        dpl::Node* current_ff = original_pin->getNode();
+        
+        if (current_ff && current_ff->isFF()) {
+            std::string current_ff_name = current_ff->name();
+            
+            std::string current_pin_name;
+            if (original_pin->getDbMTerm()) {
+                current_pin_name = original_pin->getDbMTerm()->getName();
+            } else 
+            {
+                current_pin_name = original_pin->getName();
+            }
+            
+            std::string new_pin_name = current_ff_name + "/" + current_pin_name;
+            
+            std::string mapping_line = original_pin_name + " map " + new_pin_name;
+            mapping_lines.push_back(mapping_line);
+            size_t slash_pos = original_pin_name.find('/');
+            if (slash_pos != std::string::npos) {
+                std::string instance_name = original_pin_name.substr(0, slash_pos);
+                mapped_instances.insert(instance_name);
+            }
+        }
+    }
+    
+    output_file << "CellInst " << mapped_instances.size() << std::endl;
+    
+    std::sort(mapping_lines.begin(), mapping_lines.end());
+    for (const std::string& line : mapping_lines) {
+        output_file << line << std::endl;
+    }
+    
+    output_file.close();
+    std::cout << "Pin mapping generated: " << output_filename << std::endl;
+}
+
+void MBFF_solver::printPinMapping()
+{
+    std::set<std::string> mapped_instances;
+    std::vector<std::string> mapping_lines;
+    
+    for (const auto& pin_entry : PinsMap) {
+        dpl::Pin* original_pin = pin_entry.first;
+        std::string original_pin_name = pin_entry.second;
+        
+        dpl::Node* current_ff = original_pin->getNode();
+        
+        if (current_ff && current_ff->isFF()) {
+            std::string current_ff_name = current_ff->name();
+            std::string current_pin_name;
+            if (original_pin->getDbMTerm()) {
+                current_pin_name = original_pin->getDbMTerm()->getName();
+            } else {
+                current_pin_name = original_pin->getName();
+            }
+            
+            std::string new_pin_name = current_ff_name + "/" + current_pin_name;
+            
+            std::string mapping_line = original_pin_name + " map " + new_pin_name;
+            mapping_lines.push_back(mapping_line);
+            
+            size_t slash_pos = original_pin_name.find('/');
+            if (slash_pos != std::string::npos) {
+                std::string instance_name = original_pin_name.substr(0, slash_pos);
+                mapped_instances.insert(instance_name);
+            }
+        }
+    }
+    
+    std::cout << "Output File 1: Syntax Data" << std::endl;
+    std::cout << "CellInst " << mapped_instances.size() << std::endl;
+    
+    std::sort(mapping_lines.begin(), mapping_lines.end());
+    for (const std::string& line : mapping_lines) {
+        std::cout << line << std::endl;
+    }
+}
+
 }

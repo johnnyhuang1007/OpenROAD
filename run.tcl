@@ -1,7 +1,7 @@
-set pdk_root  "/home/huang_yu_hsiang/OpenROAD/testcase2"
+set pdk_root  "/home/shawn/Bob/OpenROAD/testcase1"
 set families  {SNPSHOPT25 SNPSLOPT25 SNPSROPT25 SNPSSLOPT25}
 
-read_tech   "$pdk_root/testcase2.tf"
+read_tech   "$pdk_root/testcase1.tf"
 
 read_lef "$pdk_root/SNPSSLOPT25/lef/snps25slopt.lef"
 read_lef "$pdk_root/SNPSROPT25/lef/snps25ropt.lef"
@@ -21,10 +21,10 @@ foreach fam $families {
 # 直接保險：再手動讀一次最慢角 .lib（路徑請對應實際目錄）
 # read_liberty "$pdk_root/SNPSSLOPT25/liberty/nldm/base/snps25slopt_base_ss0p585v125c.lib"
 
-read_verilog "$pdk_root/testcase2.v"
+read_verilog "$pdk_root/testcase1.v"
 link_design  top
 
-read_def    -floorplan_initialize "$pdk_root/testcase2.def" 
+read_def    -floorplan_initialize "$pdk_root/testcase1.def" 
 #read_sdc     "$pdk_root/testcase2.sdc"
 
 detailed_placement

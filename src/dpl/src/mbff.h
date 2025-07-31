@@ -161,6 +161,9 @@ class MBFF_solver
     void setFFPins();
     std::vector<dpl::Node*> FFCells;
     std::unordered_map<dpl::Pin*, std::string> PinsMap;
+
+    void generatePinMapping(const std::string& output_filename);
+    void printPinMapping();
     
 
 };

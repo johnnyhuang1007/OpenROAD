@@ -357,6 +357,9 @@ void Opendp::place()
     }
   }
 
+  mbff.generatePinMapping("pin_mapping_output.txt");
+  mbff.printPinMapping();
+
 }
 
 void Opendp::placeGroups2()
