@@ -30,6 +30,11 @@ add_library(rsz_lib
     Resizer.cc
     OdbCallBack.cc
     ConcreteSwapArithModules.cc
+
+    weightedInst.h
+    weightedInst.cpp
+    diffGB.h
+    diffGB.cpp
 )
 
 target_sources(rsz

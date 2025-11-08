@@ -121,6 +121,8 @@ class VTSwapSpeedMove;
 class SizeUpMatchMove;
 class RegisterOdbCallbackGuard;
 
+class diffSizer;
+
 class NetHash
 {
  public:
@@ -843,6 +845,8 @@ class Resizer : public dbStaState, public dbNetworkObserver
   friend class ConcreteSwapArithModules;
   friend class Rebuffer;
   friend class OdbCallBack;
+
+  friend class diffSizer;
 };
 
 }  // namespace rsz

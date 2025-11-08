@@ -18,6 +18,8 @@
 
 #include "BufferedNet.hh"
 #include "ResizerObserver.hh"
+#include "diffGB.h"
+
 #include "db_sta/dbNetwork.hh"
 #include "db_sta/dbSta.hh"
 #include "odb/db.h"
@@ -242,6 +244,8 @@ void RepairDesign::repairDesign(
     int& length_violations)
 {
   init();
+
+  diffSizer diff_sizer(resizer_);
   slew_margin_ = slew_margin;
   cap_margin_ = cap_margin;
 

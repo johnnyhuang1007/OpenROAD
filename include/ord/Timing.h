@@ -35,6 +35,21 @@ namespace ord {
 
 class Design;
 class OpenRoad;
+
+struct TimingArcTableModel
+{
+  std::string arc_description;
+  std::string in_pin_name;
+  std::string out_pin_name;
+  std::vector<float> table_axis0;
+  std::vector<float> table_axis1;
+  std::vector<std::vector<float>> delay_table;
+  std::vector<std::vector<float>> slew_table;
+
+  float findOutputSlewValue(float axis0_value, float axis1_value) const;
+  float findOutputDelayValue(float axis0_value, float axis1_value) const;
+};
+
 class Timing
 {
  public:
@@ -78,6 +93,10 @@ class Timing
   std::vector<sta::Corner*> getCorners();
   sta::Corner* cmdCorner();
   sta::Corner* findCorner(const char* name);
+
+  std::vector<TimingArcTableModel> getTimingArcTableModels(odb::dbMTerm* from_pin,
+                                                           odb::dbMTerm* to_pin);
+  std::vector<TimingArcTableModel> getCellCurrentTableModels(odb::dbInst* inst);
 
   void makeEquivCells();
   std::vector<odb::dbMaster*> equivCells(odb::dbMaster* master);

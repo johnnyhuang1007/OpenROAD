@@ -27,9 +27,252 @@
 #include "sta/Search.hh"
 #include "sta/TimingArc.hh"
 #include "sta/TimingRole.hh"
+#include "sta/TableModel.hh"
 #include "utl/Logger.h"
 
+namespace {
+
+std::vector<float> axisValues(const sta::TableModel* model, int axis_index)
+{
+  std::vector<float> values;
+  if (model == nullptr) {
+    return values;
+  }
+
+  const sta::TableAxis* axis = nullptr;
+  if (axis_index == 0) {
+    axis = model->axis1();
+  }
+  else if (axis_index == 1) {
+    axis = model->axis2();
+  }
+
+  if (axis == nullptr) {
+    return values;
+  }
+
+  sta::FloatSeq* seq = axis->values();
+  if (seq == nullptr) {
+    return values;
+  }
+
+  values.reserve(seq->size());
+  for (size_t i = 0; i < seq->size(); ++i) {
+    values.push_back((*seq)[i]);
+  }
+  return values;
+}
+
+std::vector<std::vector<float>> tableValues(const sta::TableModel* model)
+{
+  std::vector<std::vector<float>> values;
+  if (model == nullptr) {
+    return values;
+  }
+
+  size_t rows = 1;
+  if (const sta::TableAxis* axis = model->axis1()) {
+    rows = std::max<size_t>(axis->size(), 1);
+  }
+
+  size_t cols = 1;
+  if (const sta::TableAxis* axis = model->axis2()) {
+    cols = std::max<size_t>(axis->size(), 1);
+  }
+
+  values.assign(rows, std::vector<float>(cols, 0.0f));
+  for (size_t row = 0; row < rows; ++row) {
+    for (size_t col = 0; col < cols; ++col) {
+      values[row][col] = model->value(row, col, 0);
+    }
+  }
+  return values;
+}
+
+struct AxisInterpolation
+{
+  size_t low;
+  size_t high;
+  float fraction;
+};
+
+AxisInterpolation locateAxisPosition(const std::vector<float>& axis,
+                                     float value,
+                                     size_t table_size)
+{
+  AxisInterpolation pos{0, 0, 0.0f};
+  if (table_size == 0) {
+    return pos;
+  }
+
+  if (axis.empty() || axis.size() == 1) {
+    pos.low = pos.high = 0;
+    pos.fraction = 0.0f;
+    return pos;
+  }
+
+  if (value <= axis.front()) {
+    pos.low = 0;
+    pos.high = 1;
+    pos.fraction = 0.0f;
+    return pos;
+  }
+
+  if (value >= axis.back()) {
+    pos.high = axis.size() - 1;
+    pos.low = pos.high - 1;
+    pos.fraction = 1.0f;
+    return pos;
+  }
+
+  for (size_t i = 0; i < axis.size() - 1; ++i) {
+    const float lower = axis[i];
+    const float upper = axis[i + 1];
+    if (value <= upper) {
+      float fraction = 0.0f;
+      if (upper > lower) {
+        fraction = std::clamp((value - lower) / (upper - lower), 0.0f, 1.0f);
+      }
+      pos.low = i;
+      pos.high = i + 1;
+      pos.fraction = fraction;
+      return pos;
+    }
+  }
+
+  pos.high = axis.size() - 1;
+  pos.low = pos.high - 1;
+  pos.fraction = 1.0f;
+  return pos;
+}
+
+AxisInterpolation clampAxisPosition(const AxisInterpolation& pos, size_t size)
+{
+  AxisInterpolation result = pos;
+  if (size == 0) {
+    result.low = result.high = 0;
+    result.fraction = 0.0f;
+    return result;
+  }
+
+  result.low = std::min(result.low, size - 1);
+  result.high = std::min(result.high, size - 1);
+  if (result.low == result.high) {
+    result.fraction = 0.0f;
+  }
+  return result;
+}
+
+float interpolateTable(const std::vector<float>& axis0,
+                       const std::vector<float>& axis1,
+                       const std::vector<std::vector<float>>& table,
+                       float axis0_value,
+                       float axis1_value)
+{
+  if (table.empty() || table.front().empty()) {
+    return 0.0f;
+  }
+
+  AxisInterpolation axis0_pos = clampAxisPosition(
+      locateAxisPosition(axis0, axis0_value, table.size()), table.size());
+  AxisInterpolation axis1_pos = clampAxisPosition(
+      locateAxisPosition(axis1, axis1_value, table.front().size()),
+      table.front().size());
+
+  const float v00 = table[axis0_pos.low][axis1_pos.low];
+  const float v01 = table[axis0_pos.low][axis1_pos.high];
+  const float v10 = table[axis0_pos.high][axis1_pos.low];
+  const float v11 = table[axis0_pos.high][axis1_pos.high];
+
+  if (axis0_pos.low == axis0_pos.high
+      && axis1_pos.low == axis1_pos.high) {
+    return v00;
+  }
+
+  if (axis0_pos.low == axis0_pos.high) {
+    return v00 + (v01 - v00) * axis1_pos.fraction;
+  }
+
+  if (axis1_pos.low == axis1_pos.high) {
+    return v00 + (v10 - v00) * axis0_pos.fraction;
+  }
+
+  const float v0 = v00 + (v01 - v00) * axis1_pos.fraction;
+  const float v1 = v10 + (v11 - v10) * axis1_pos.fraction;
+  return v0 + (v1 - v0) * axis0_pos.fraction;
+}
+
+void appendArcTableModels(const sta::TimingArcSetSeq& arc_sets,
+                          std::vector<ord::TimingArcTableModel>& tables)
+{
+  for (const sta::TimingArcSet* arc_set : arc_sets) {
+    if (arc_set == nullptr) {
+      continue;
+    }
+    for (const sta::TimingArc* arc : arc_set->arcs()) {
+      if (arc == nullptr) {
+        continue;
+      }
+      sta::GateTableModel* gate_model = arc->gateTableModel();
+      if (gate_model == nullptr) {
+        continue;
+      }
+
+      ord::TimingArcTableModel entry;
+      entry.arc_description = arc->to_string();
+      entry.in_pin_name = arc->from()->name();
+      entry.out_pin_name = arc->to()->name();
+
+      const sta::TableModel* delay_model = gate_model->delayModel();
+      const sta::TableModel* slew_model = gate_model->slewModel();
+
+      entry.slew_model = slew_model;
+      entry.delay_model = delay_model;
+
+      entry.table_axis0 = axisValues(delay_model, 0);
+      if (entry.table_axis0.empty()) {
+        entry.table_axis0 = axisValues(slew_model, 0);
+      }
+
+      entry.table_axis1 = axisValues(delay_model, 1);
+      if (entry.table_axis1.empty()) {
+        entry.table_axis1 = axisValues(slew_model, 1);
+      }
+
+      entry.delay_table = tableValues(delay_model);
+      entry.slew_table = tableValues(slew_model);
+
+      tables.push_back(std::move(entry));
+    }
+  }
+}
+
+}  // namespace
+
 namespace ord {
+
+float TimingArcTableModel::findOutputSlewValue(odb::dbMaster* master,
+                                               float axis0_value,
+                                               float axis1_value) const
+{
+  float result = interpolateTable(table_axis0, table_axis1, slew_table, axis0_value,
+                          axis1_value);
+  sta::dbSta* sta = getSta();
+  sta::Cell* cell = sta->getDbNetwork()->dbToSta(master);
+  sta::LibertyCell* lib_cell = sta->getDbNetwork()->libertyCell(cell);
+  
+  sta::Pvt* pvt = sta->corners()->pvt();
+  float gate_scale = slew_model->scaleFactor(lib_cell, pvt);
+  result *= gate_scale; //scale factor can be applied here if needed
+  return result;
+}
+
+float TimingArcTableModel::findOutputDelayValue(float axis0_value,
+                                                float axis1_value) const
+{
+  return interpolateTable(table_axis0, table_axis1, delay_table, axis0_value,
+                          axis1_value);
+}
 
 Timing::Timing(Design* design) : design_(design)
 {
@@ -252,6 +495,100 @@ sta::Corner* Timing::findCorner(const char* name)
   }
 
   return nullptr;
+}
+
+std::vector<TimingArcTableModel> Timing::getTimingArcTableModels(
+    odb::dbMTerm* from_pin,
+    odb::dbMTerm* to_pin)
+{
+  std::vector<TimingArcTableModel> tables;
+  if (from_pin == nullptr || to_pin == nullptr) {
+    return tables;
+  }
+
+  if (from_pin->getMaster() != to_pin->getMaster()) {
+    return tables;
+  }
+
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta::Port* from_port = network->dbToSta(from_pin);
+  sta::Port* to_port = network->dbToSta(to_pin);
+  if (from_port == nullptr || to_port == nullptr) {
+    return tables;
+  }
+
+  sta::Cell* sta_cell = network->dbToSta(from_pin->getMaster());
+  if (sta_cell == nullptr) {
+    return tables;
+  }
+
+  sta::LibertyCell* lib_cell = network->libertyCell(sta_cell);
+  if (lib_cell == nullptr) {
+    return tables;
+  }
+
+  sta::LibertyPort* from_lib_port = network->libertyPort(from_port);
+  sta::LibertyPort* to_lib_port = network->libertyPort(to_port);
+  if (from_lib_port == nullptr || to_lib_port == nullptr) {
+    return tables;
+  }
+
+  appendArcTableModels(lib_cell->timingArcSets(from_lib_port, to_lib_port),
+                       tables);
+  return tables;
+}
+
+std::vector<TimingArcTableModel> Timing::getCellCurrentTableModels(
+    odb::dbInst* inst)
+{
+  std::vector<TimingArcTableModel> tables;
+  if (inst == nullptr) {
+    return tables;
+  }
+
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta::Instance* sta_inst = network->dbToSta(inst);
+  if (sta_inst == nullptr) {
+    return tables;
+  }
+
+  sta::LibertyCell* lib_cell = network->libertyCell(sta_inst);
+  if (lib_cell == nullptr) {
+    return tables;
+  }
+
+  appendArcTableModels(lib_cell->timingArcSets(), tables);
+  return tables;
+}
+
+
+std::vector<TimingArcTableModel> Timing::getLibertyCellTableModels(odb::dbMaster* master)
+{
+  std::vector<TimingArcTableModel> tables;
+  if (master == nullptr) {
+    return tables;
+  }
+
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta::Cell* sta_cell = network->dbToSta(master);
+  
+  if (sta_cell == nullptr) {
+    return tables;
+  }
+  sta::LibertyCell* lib_cell = network->libertyCell(sta_cell);
+  if (lib_cell == nullptr) {
+    return tables;
+  }
+  appendArcTableModels(lib_cell->timingArcSets(), tables);
+  return tables;
+}
+
+float Timing::gateScaleFactor(odb::dbInst* inst)
+{
+  return 1.0f;
 }
 
 float Timing::getPinSlack(odb::dbITerm* db_pin, RiseFall rf, MinMax minmax)

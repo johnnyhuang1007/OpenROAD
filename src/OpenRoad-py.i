@@ -50,6 +50,9 @@ get_db_block();
 %template(Corners) std::vector<sta::Corner*>;
 %template(MTerms) std::vector<odb::dbMTerm*>;
 %template(Masters) std::vector<odb::dbMaster*>;
+%template(FloatVector) std::vector<float>;
+%template(FloatMatrix) std::vector<std::vector<float>>;
+%template(TimingArcTableModels) std::vector<ord::TimingArcTableModel>;
 
 %include "Exception-py.i"
 %include "ord/Tech.h"

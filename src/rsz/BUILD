@@ -51,6 +51,11 @@ cc_library(
         "src/UnbufferMove.hh",
         "src/VTSwapMove.cc",
         "src/VTSwapMove.hh",
+
+        "src/weightedCell.h",
+        "src/weightedCell.cpp",
+        "src/diffGB.h",
+        "src/diffGB.cpp",
     ],
     hdrs = [
         "include/rsz/OdbCallBack.hh",
