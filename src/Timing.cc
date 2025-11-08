@@ -29,6 +29,26 @@
 
 namespace ord {
 
+float Timing::gateScaleFactor(odb::dbInst* inst)
+{
+  sta::dbSta* sta = getSta();
+}
+
+float TimingArcTableModel::findOutputSlewValue(float axis0_value,
+                                               float axis1_value) const
+{
+  return interpolateTable(table_axis0, table_axis1, slew_table, axis0_value,
+                          axis1_value);
+}
+
+float TimingArcTableModel::findOutputDelayValue(float axis0_value,
+                                                float axis1_value) const
+{
+  return interpolateTable(table_axis0, table_axis1, delay_table, axis0_value,
+                          axis1_value);
+}
+
+>>>>>>> 83ceb0b0ac (update)
 Timing::Timing(Design* design) : design_(design)
 {
 }
