@@ -251,20 +251,16 @@ void appendArcTableModels(const sta::TimingArcSetSeq& arc_sets,
 
 namespace ord {
 
-float TimingArcTableModel::findOutputSlewValue(odb::dbMaster* master,
-                                               float axis0_value,
+float Timing::gateScaleFactor(odb::dbInst* inst)
+{
+  sta::dbSta* sta = getSta();
+}
+
+float TimingArcTableModel::findOutputSlewValue(float axis0_value,
                                                float axis1_value) const
 {
-  float result = interpolateTable(table_axis0, table_axis1, slew_table, axis0_value,
+  return interpolateTable(table_axis0, table_axis1, slew_table, axis0_value,
                           axis1_value);
-  sta::dbSta* sta = getSta();
-  sta::Cell* cell = sta->getDbNetwork()->dbToSta(master);
-  sta::LibertyCell* lib_cell = sta->getDbNetwork()->libertyCell(cell);
-  
-  sta::Pvt* pvt = sta->corners()->pvt();
-  float gate_scale = slew_model->scaleFactor(lib_cell, pvt);
-  result *= gate_scale; //scale factor can be applied here if needed
-  return result;
 }
 
 float TimingArcTableModel::findOutputDelayValue(float axis0_value,
