@@ -251,10 +251,6 @@ void appendArcTableModels(const sta::TimingArcSetSeq& arc_sets,
 
 namespace ord {
 
-float Timing::gateScaleFactor(odb::dbInst* inst)
-{
-  sta::dbSta* sta = getSta();
-}
 
 float TimingArcTableModel::findOutputSlewValue(float axis0_value,
                                                float axis1_value) const
@@ -266,8 +262,12 @@ float TimingArcTableModel::findOutputSlewValue(float axis0_value,
 float TimingArcTableModel::findOutputDelayValue(float axis0_value,
                                                 float axis1_value) const
 {
-  return interpolateTable(table_axis0, table_axis1, delay_table, axis0_value,
+  //float actual = delay_model->findValue(axis0_value, axis1_value, 0);
+  //std::cout<<"actual delay: "<< actual <<", cal delay: "<< cal << std::endl; verified
+  float cal = interpolateTable(table_axis0, table_axis1, delay_table, axis0_value,
                           axis1_value);
+
+  return cal;
 }
 
 Timing::Timing(Design* design) : design_(design)
@@ -584,7 +584,70 @@ std::vector<TimingArcTableModel> Timing::getLibertyCellTableModels(odb::dbMaster
 
 float Timing::gateScaleFactor(odb::dbInst* inst)
 {
-  return 1.0f;
+  if (inst == nullptr) {
+    return 1.0f;
+  }
+
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta::Instance* sta_inst = network->dbToSta(inst);
+  if (sta_inst == nullptr) {
+    return 1.0f;
+  }
+
+  sta::LibertyCell* lib_cell = network->libertyCell(sta_inst);
+  if (lib_cell == nullptr) {
+    return 1.0f;
+  }
+
+  const sta::MinMax* min_max = getMinMax(Max);
+  const sta::Pvt* pvt = sta->pvt(sta_inst, min_max);
+  if (pvt == nullptr) {
+    return 1.0f;
+  }
+
+  const sta::LibertyLibrary* lib = lib_cell->libertyLibrary();
+  if (lib == nullptr) {
+    return 1.0f;
+  }
+
+  return lib->scaleFactor(sta::ScaleFactorType::cell, lib_cell, pvt);
+}
+//dmp_ceff_elmore
+float Timing::ScaleFactor(odb::dbInst* inst, TimingArcTableModel& _arcTableModel, std::string type)
+{
+  const sta::TableModel* _model = nullptr;
+  if (type == "delay") 
+    _model = _arcTableModel.delay_model;
+  else if (type == "slew") 
+    _model = _arcTableModel.slew_model;
+  else 
+    return 1.0f;
+  
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta::Instance* sta_inst = network->dbToSta(inst);
+  if (sta_inst == nullptr) {
+    std::cout<<"No Instance found!"<<std::endl;
+    return 1.0f;
+  }
+
+  sta::LibertyCell* lib_cell = network->libertyCell(sta_inst);
+  if (lib_cell == nullptr) {
+    std::cout<<"No LibertyCell found!"<<std::endl;
+    return 1.0f;
+  }
+
+  const sta::MinMax* min_max = getMinMax(Max);
+  const sta::Pvt* pvt = sta->pvt(sta_inst, min_max);
+  if (pvt == nullptr) {
+    std::cout<<"No PVT found!"<<std::endl;
+    return 1.0f;
+  }
+
+  float value = _model->scaleFactor(lib_cell, pvt);
+  std::cout<<"Scale factor for "<< type <<" : "<< value << std::endl;
+  return value;
 }
 
 float Timing::getPinSlack(odb::dbITerm* db_pin, RiseFall rf, MinMax minmax)
