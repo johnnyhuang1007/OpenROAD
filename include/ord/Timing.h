@@ -41,13 +41,23 @@ struct TimingArcTableModel
   std::string arc_description;
   std::string in_pin_name;
   std::string out_pin_name;
+  std::string in_rf;
+  std::string out_rf;
   std::vector<float> table_axis0;
   std::vector<float> table_axis1;
   std::vector<std::vector<float>> delay_table;
   std::vector<std::vector<float>> slew_table;
 
+  const sta::TableModel* delay_model;
+  const sta::TableModel* slew_model;  //for internal use only
+
   float findOutputSlewValue(float axis0_value, float axis1_value) const;
   float findOutputDelayValue(float axis0_value, float axis1_value) const;
+
+  std::vector<float> findOutputSlewGradients(float axis0_value,
+                                              float axis1_value) const;
+  std::vector<float> findOutputDelayGradients(float axis0_value,
+                                               float axis1_value) const;
 };
 
 class Timing
@@ -76,6 +86,10 @@ class Timing
   float getPinSlew(odb::dbITerm* db_pin, MinMax minmax = Max);
   float getPinSlew(odb::dbBTerm* db_pin, MinMax minmax = Max);
 
+  // Per-rise/fall variant of getPinSlew. Returns slew (seconds) for the
+  // specified transition and min/max selection across all corners.
+  float getPinSlew(odb::dbITerm* db_pin, RiseFall rf, MinMax minmax = Max);
+  float getPinSlew(odb::dbBTerm* db_pin, RiseFall rf, MinMax minmax = Max);
   float getPinSlack(odb::dbITerm* db_pin, RiseFall rf, MinMax minmax = Max);
   float getPinSlack(odb::dbBTerm* db_pin, RiseFall rf, MinMax minmax = Max);
 
@@ -94,9 +108,30 @@ class Timing
   sta::Corner* cmdCorner();
   sta::Corner* findCorner(const char* name);
 
+
+  //Newly added functions to extract timing arc table models
   std::vector<TimingArcTableModel> getTimingArcTableModels(odb::dbMTerm* from_pin,
-                                                           odb::dbMTerm* to_pin);
+                                                           odb::dbMTerm* to_pin); //at least 2 r/f f/r
   std::vector<TimingArcTableModel> getCellCurrentTableModels(odb::dbInst* inst);
+  std::vector<TimingArcTableModel> getLibertyCellTableModels(odb::dbMaster* master);
+  float gateScaleFactor(odb::dbInst* inst); //gate delay or slew = scale * table value
+  // Enable common STA debug categories at a reasonable verbosity.
+  // This only toggles STA-side debugPrint categories.
+  void enableDebugPrinting();
+
+
+  // Read gate delay already annotated on the timing graph without recomputation.
+  // Returns delay (seconds) for a specific arc in a specific corner/minmax and
+  // transitions. If the delay is not annotated, returns NAN.
+  float graphGateDelay(odb::dbITerm* from_pin,
+                       odb::dbITerm* to_pin,
+                       sta::Corner* corner,
+                       MinMax minmax,
+                       std::string from_rf_str,
+                       std::string to_rf_str);
+  float ScaleFactor(odb::dbInst* inst, TimingArcTableModel& model, std::string type);
+
+
 
   void makeEquivCells();
   std::vector<odb::dbMaster*> equivCells(odb::dbMaster* master);
@@ -108,9 +143,13 @@ class Timing
   std::array<sta::Vertex*, 2> vertices(const sta::Pin* pin);
   bool isEndpoint(sta::Pin* sta_pin);
   float getPinSlew(sta::Pin* sta_pin, MinMax minmax);
+  float getPinSlew(sta::Pin* sta_pin, const sta::RiseFall* rf, MinMax minmax);
   float getPinArrival(sta::Pin* sta_pin, RiseFall rf, MinMax minmax);
   float getPinSlack(sta::Pin* sta_pin, RiseFall rf, MinMax minmax);
   float slewAllCorners(sta::Vertex* vertex, const sta::MinMax* minmax);
+  float slewAllCorners(sta::Vertex* vertex,
+                       const sta::RiseFall* rf,
+                       const sta::MinMax* minmax);
   std::vector<float> arrivalsClk(const sta::RiseFall* rf,
                                  sta::Clock* clk,
                                  const sta::RiseFall* clk_rf,

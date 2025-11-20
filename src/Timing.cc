@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <array>
+#include <limits>
 #include <cstring>
 #include <set>
 #include <utility>
@@ -28,6 +29,10 @@
 #include "sta/TimingArc.hh"
 #include "sta/TimingRole.hh"
 #include "sta/TableModel.hh"
+#include "sta/DcalcAnalysisPt.hh"
+#include "sta/Graph.hh"
+#include "sta/Delay.hh"
+#include "sta/Debug.hh"
 #include "utl/Logger.h"
 
 namespace {
@@ -169,6 +174,7 @@ float interpolateTable(const std::vector<float>& axis0,
                        float axis0_value,
                        float axis1_value)
 {
+  
   if (table.empty() || table.front().empty()) {
     return 0.0f;
   }
@@ -196,10 +202,13 @@ float interpolateTable(const std::vector<float>& axis0,
   if (axis1_pos.low == axis1_pos.high) {
     return v00 + (v10 - v00) * axis0_pos.fraction;
   }
+  float dx = (axis0_value - axis0[axis0_pos.low])/(axis0[axis0_pos.high]-axis0[axis0_pos.low]);
+  float dy = (axis1_value - axis1[axis1_pos.low])/(axis1[axis1_pos.high]-axis1[axis1_pos.low]);
+  float tbl_value = v00*(1-dx)*(1-dy) + v10*dx*(1-dy) + v11*dx*dy + v01*(1-dx)*dy;
 
   const float v0 = v00 + (v01 - v00) * axis1_pos.fraction;
   const float v1 = v10 + (v11 - v10) * axis1_pos.fraction;
-  return v0 + (v1 - v0) * axis0_pos.fraction;
+  return tbl_value;
 }
 
 void appendArcTableModels(const sta::TimingArcSetSeq& arc_sets,
@@ -222,6 +231,9 @@ void appendArcTableModels(const sta::TimingArcSetSeq& arc_sets,
       entry.arc_description = arc->to_string();
       entry.in_pin_name = arc->from()->name();
       entry.out_pin_name = arc->to()->name();
+
+      entry.in_rf = arc->fromEdge()->to_string();
+      entry.out_rf = arc->toEdge()->to_string(); //^ or v
 
       const sta::TableModel* delay_model = gate_model->delayModel();
       const sta::TableModel* slew_model = gate_model->slewModel();
@@ -259,15 +271,76 @@ float TimingArcTableModel::findOutputSlewValue(float axis0_value,
                           axis1_value);
 }
 
+
 float TimingArcTableModel::findOutputDelayValue(float axis0_value,
                                                 float axis1_value) const
 {
-  //float actual = delay_model->findValue(axis0_value, axis1_value, 0);
-  //std::cout<<"actual delay: "<< actual <<", cal delay: "<< cal << std::endl; verified
+  float actual = delay_model->findValue(axis0_value, axis1_value, 0); 
   float cal = interpolateTable(table_axis0, table_axis1, delay_table, axis0_value,
                           axis1_value);
-
+  
+  std::cout<<"actual delay: "<< actual <<", cal delay: "<< cal << std::endl;
   return cal;
+}
+
+std::vector<float> TimingArcTableModel::findOutputDelayGradients(float axis0_value,
+                                   float axis1_value) const
+{
+  std::vector<float> gradients;
+  gradients.resize(2, 0.0f);
+
+  if (delay_table.empty() || delay_table.front().empty()) {
+    return gradients;
+  }
+
+  AxisInterpolation axis0_pos = clampAxisPosition(
+      locateAxisPosition(table_axis0, axis0_value, delay_table.size()), delay_table.size());
+  AxisInterpolation axis1_pos = clampAxisPosition(
+      locateAxisPosition(table_axis1, axis1_value, delay_table.front().size()),
+      delay_table.front().size());
+
+  if (axis0_pos.low == axis0_pos.high) axis0_pos.high++;
+  if (axis1_pos.low == axis1_pos.high) axis1_pos.high++;
+  const float v00 = delay_table[axis0_pos.low][axis1_pos.low];
+  const float v01 = delay_table[axis0_pos.low][axis1_pos.high];
+  const float v10 = delay_table[axis0_pos.high][axis1_pos.low];
+  const float v11 = delay_table[axis0_pos.high][axis1_pos.high];
+  
+  gradients[0] = ((v11 - v01) + (v10 - v00)) / (2*(table_axis0[axis0_pos.high] - table_axis0[axis0_pos.low]));
+  gradients[1] = ((v11 - v10) + (v01 - v00)) / (2*(table_axis1[axis1_pos.high] - table_axis1[axis1_pos.low]));
+
+
+  return gradients;
+}
+
+std::vector<float> TimingArcTableModel::findOutputSlewGradients(float axis0_value,
+                                   float axis1_value) const
+{
+  std::vector<float> gradients;
+  gradients.resize(2, 0.0f);
+
+  if (slew_table.empty() || slew_table.front().empty()) {
+    return gradients;
+  }
+
+  AxisInterpolation axis0_pos = clampAxisPosition(
+      locateAxisPosition(table_axis0, axis0_value, slew_table.size()), slew_table.size());
+  AxisInterpolation axis1_pos = clampAxisPosition(
+      locateAxisPosition(table_axis1, axis1_value, slew_table.front().size()),
+      slew_table.front().size());
+
+  if (axis0_pos.low == axis0_pos.high) axis0_pos.high++;
+  if (axis1_pos.low == axis1_pos.high) axis1_pos.high++;
+  const float v00 = slew_table[axis0_pos.low][axis1_pos.low];
+  const float v01 = slew_table[axis0_pos.low][axis1_pos.high];
+  const float v10 = slew_table[axis0_pos.high][axis1_pos.low];
+  const float v11 = slew_table[axis0_pos.high][axis1_pos.high];
+  
+  gradients[0] = ((v11 - v01) + (v10 - v00)) / (2*(table_axis0[axis0_pos.high] - table_axis0[axis0_pos.low]));
+  gradients[1] = ((v11 - v10) + (v01 - v00)) / (2*(table_axis1[axis1_pos.high] - table_axis1[axis1_pos.low]));
+
+
+  return gradients;
 }
 
 Timing::Timing(Design* design) : design_(design)
@@ -327,6 +400,20 @@ float Timing::slewAllCorners(sta::Vertex* vertex, const sta::MinMax* minmax)
   return slew;
 }
 
+float Timing::slewAllCorners(sta::Vertex* vertex,
+                             const sta::RiseFall* rf,
+                             const sta::MinMax* minmax)
+{
+  auto sta = getSta();
+  const bool take_max = (minmax == sta::MinMax::max());
+  float slew = take_max ? -sta::INF : sta::INF;
+  for (auto corner : getCorners()) {
+    const float slew_corner = sta::delayAsFloat(sta->vertexSlew(vertex, rf, corner, minmax));
+    slew = take_max ? std::max(slew, slew_corner) : std::min(slew, slew_corner);
+  }
+  return slew;
+}
+
 float Timing::getPinSlew(odb::dbITerm* db_pin, MinMax minmax)
 {
   sta::dbSta* sta = getSta();
@@ -348,6 +435,34 @@ float Timing::getPinSlew(sta::Pin* sta_pin, MinMax minmax)
   for (auto vertex : vertex_array) {
     if (vertex != nullptr) {
       const float pin_slew_temp = slewAllCorners(vertex, getMinMax(minmax));
+      pin_slew = (minmax == Max) ? std::max(pin_slew, pin_slew_temp)
+                                 : std::min(pin_slew, pin_slew_temp);
+    }
+  }
+  return pin_slew;
+}
+
+float Timing::getPinSlew(odb::dbITerm* db_pin, RiseFall rf, MinMax minmax)
+{
+  sta::dbSta* sta = getSta();
+  sta::Pin* sta_pin = sta->getDbNetwork()->dbToSta(db_pin);
+  return getPinSlew(sta_pin, rf == Rise ? sta::RiseFall::rise() : sta::RiseFall::fall(), minmax);
+}
+
+float Timing::getPinSlew(odb::dbBTerm* db_pin, RiseFall rf, MinMax minmax)
+{
+  sta::dbSta* sta = getSta();
+  sta::Pin* sta_pin = sta->getDbNetwork()->dbToSta(db_pin);
+  return getPinSlew(sta_pin, rf == Rise ? sta::RiseFall::rise() : sta::RiseFall::fall(), minmax);
+}
+
+float Timing::getPinSlew(sta::Pin* sta_pin, const sta::RiseFall* rf, MinMax minmax)
+{
+  auto vertex_array = vertices(sta_pin);
+  float pin_slew = (minmax == Max) ? -sta::INF : sta::INF;
+  for (auto vertex : vertex_array) {
+    if (vertex != nullptr) {
+      const float pin_slew_temp = slewAllCorners(vertex, rf, getMinMax(minmax));
       pin_slew = (minmax == Max) ? std::max(pin_slew, pin_slew_temp)
                                  : std::min(pin_slew, pin_slew_temp);
     }
@@ -628,25 +743,21 @@ float Timing::ScaleFactor(odb::dbInst* inst, TimingArcTableModel& _arcTableModel
   sta::dbNetwork* network = sta->getDbNetwork();
   sta::Instance* sta_inst = network->dbToSta(inst);
   if (sta_inst == nullptr) {
-    std::cout<<"No Instance found!"<<std::endl;
     return 1.0f;
   }
 
   sta::LibertyCell* lib_cell = network->libertyCell(sta_inst);
   if (lib_cell == nullptr) {
-    std::cout<<"No LibertyCell found!"<<std::endl;
     return 1.0f;
   }
 
   const sta::MinMax* min_max = getMinMax(Max);
   const sta::Pvt* pvt = sta->pvt(sta_inst, min_max);
   if (pvt == nullptr) {
-    std::cout<<"No PVT found!"<<std::endl;
     return 1.0f;
   }
 
   float value = _model->scaleFactor(lib_cell, pvt);
-  std::cout<<"Scale factor for "<< type <<" : "<< value << std::endl;
   return value;
 }
 
@@ -669,6 +780,105 @@ float Timing::getPinSlack(sta::Pin* sta_pin, RiseFall rf, MinMax minmax)
   sta::dbSta* sta = getSta();
   auto sta_rf = (rf == Rise) ? sta::RiseFall::rise() : sta::RiseFall::fall();
   return sta->pinSlack(sta_pin, sta_rf, getMinMax(minmax));
+}
+
+void Timing::enableDebugPrinting()
+{
+  sta::dbSta* sta = getSta();
+  if (sta == nullptr) {
+    return;
+  }
+  sta::Debug* dbg = sta->debug();
+  if (dbg == nullptr) {
+    return;
+  }
+  // Enable a few useful STA categories at level 1.
+  dbg->setLevel("delay_calc", 2);
+  dbg->setLevel("parasitic_reduce", 2);
+  
+  dbg->setLevel("graph", 1);
+  // Optionally enable stats summary prints.
+  dbg->setLevel("stats", 1);
+}
+
+static const sta::RiseFall* toStaRiseFall(Timing::RiseFall rf)
+{
+  return (rf == Timing::Rise) ? sta::RiseFall::rise() : sta::RiseFall::fall();
+}
+
+float Timing::graphGateDelay(odb::dbITerm* from_pin,
+                             odb::dbITerm* to_pin,
+                             sta::Corner* corner,
+                             MinMax minmax,
+                             std::string from_rf_str,
+                             std::string  to_rf_str)
+{
+  //std::cout<<getSta()->arcDelayCalc()->name()<<std::endl;
+  if (from_pin == nullptr || to_pin == nullptr || corner == nullptr) {
+    return std::numeric_limits<float>::quiet_NaN();
+  }
+  RiseFall from_rf, to_rf;
+  if (from_rf_str == "^") {
+    from_rf = Rise;
+  } else if (from_rf_str == "v") {
+    from_rf = Fall;
+  } else {
+    std::cout<<"invalid rise/fall string: " << to_rf_str << std::endl;
+    return std::numeric_limits<float>::quiet_NaN();
+  }
+
+  if (to_rf_str == "^") {
+    to_rf = Rise;
+  } else if (to_rf_str == "v") {
+    to_rf = Fall;
+  } else {
+    std::cout<<"invalid rise/fall string: " << to_rf_str << std::endl;
+    return std::numeric_limits<float>::quiet_NaN();
+  }
+
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta::Pin* in_pin = network->dbToSta(from_pin);
+  sta::Pin* drvr_pin = network->dbToSta(to_pin);
+  if (in_pin == nullptr || drvr_pin == nullptr) {
+    std::cout<<"invalid pins" << std::endl;
+    return std::numeric_limits<float>::quiet_NaN();
+  }
+
+  sta::Graph* graph = cmdGraph();
+  if (graph == nullptr) {
+    std::cout<<"invalid graph" << std::endl;
+    return std::numeric_limits<float>::quiet_NaN();
+  }
+
+  const sta::RiseFall* in_rf = toStaRiseFall(from_rf);
+  const sta::RiseFall* out_rf = toStaRiseFall(to_rf);
+
+  sta::Edge* edge = nullptr;
+  const sta::TimingArc* arc = nullptr;
+  graph->gateEdgeArc(in_pin, in_rf, drvr_pin, out_rf, edge, arc);
+  if (edge == nullptr || arc == nullptr) {
+    std::cout<<"invalid edge or arc" << std::endl;
+    return std::numeric_limits<float>::quiet_NaN();
+  }
+
+  const sta::DcalcAnalysisPt* dcalc_ap =
+      corner->findDcalcAnalysisPt(getMinMax(minmax));
+  if (dcalc_ap == nullptr) {
+    std::cout<<"invalid corner or minmax" << std::endl;
+    return std::numeric_limits<float>::quiet_NaN();
+  }
+  sta::DcalcAPIndex ap_index = dcalc_ap->index();
+
+  // If not annotated, don't recompute here; return NaN to indicate missing.
+  /*
+  if (!graph->arcDelayAnnotated(edge, arc, ap_index)) {
+    std::cout<<"arc delay not annotated" << std::endl;
+    return std::numeric_limits<float>::quiet_NaN();
+  }
+  */
+  sta::ArcDelay delay = graph->arcDelay(edge, arc, ap_index);
+  return sta::delayAsFloat(delay);
 }
 
 // I'd like to return a std::set but swig gave me way too much grief
