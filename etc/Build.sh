@@ -211,7 +211,7 @@ echo "[INFO] Using ${numThreads} threads."
 if [[ "$isNinja" == "yes" ]]; then
     eval cmake "${cmakeOptions}" -B "${buildDir}" .
     cd "${buildDir}"
-    CLICOLOR_FORCE=1 ninja build_and_test
+    CLICOLOR_FORCE=1 ninja
     exit 0
 fi
 eval cmake "${cmakeOptions}" -B "${buildDir}" .

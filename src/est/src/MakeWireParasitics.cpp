@@ -471,6 +471,7 @@ void MakeWireParasitics::layerRC(int wire_length_dbu,
   }
 
   const float wire_length = dbuToMeters(wire_length_dbu);
+  std::cout<<"layer_id: "<<layer_id<<" r_per_meter: "<<r_per_meter<<" cap_per_meter: "<<cap_per_meter<<" wire_length: "<<wire_length<<std::endl;
   res = r_per_meter * wire_length;
   cap = cap_per_meter * wire_length;
 }

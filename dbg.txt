@@ -1,0 +1,320 @@
+OpenROAD v2.0-24953-g55d718c600 
+Features included (+) or not (-): +GPU +GUI +Python
+This program is licensed under the BSD-3 license. See the LICENSE file for details.
+Components of this program may be licensed under more restrictive licenses which must be honored.
+[WARNING ORD-0039] .openroad ignored with -python
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 13178, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 13211, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 13244, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 13277, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 13310, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 13343, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 13376, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 14772, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 14805, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 14838, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_LVT_TT_nldm_211120.lib line 13178, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_LVT_TT_nldm_211120.lib line 13211, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_LVT_TT_nldm_211120.lib line 13244, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_LVT_TT_nldm_211120.lib line 13277, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_LVT_TT_nldm_211120.lib line 13310, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_LVT_TT_nldm_211120.lib line 13343, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_LVT_TT_nldm_211120.lib line 13376, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_LVT_TT_nldm_211120.lib line 14772, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_LVT_TT_nldm_211120.lib line 14805, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_LVT_TT_nldm_211120.lib line 14838, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_SLVT_TT_nldm_211120.lib line 13178, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_SLVT_TT_nldm_211120.lib line 13211, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_SLVT_TT_nldm_211120.lib line 13244, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_SLVT_TT_nldm_211120.lib line 13277, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_SLVT_TT_nldm_211120.lib line 13310, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_SLVT_TT_nldm_211120.lib line 13343, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_SLVT_TT_nldm_211120.lib line 13376, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_SLVT_TT_nldm_211120.lib line 14772, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_SLVT_TT_nldm_211120.lib line 14805, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_SLVT_TT_nldm_211120.lib line 14838, timing group from output port.
+[INFO ODB-0227] LEF file: /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lef/asap7_tech_1x_201209.lef, created 30 layers, 9 vias
+[INFO ODB-0227] LEF file: /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lef/asap7sc7p5t_28_R_1x_220121a.lef, created 212 library cells
+[WARNING ODB-0176] error: undefined layer (OVERLAP) referenced
+[INFO ODB-0227] LEF file: /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lef/sram_asap7_64x256_1rw.lef, created 1 library cells
+[INFO ODB-0394] Duplicate site asap7sc7p5t in asap7sc7p5t_28_L_1x_220121a already seen in asap7sc7p5t_28_R_1x_220121a
+[INFO ODB-0227] LEF file: /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lef/asap7sc7p5t_28_L_1x_220121a.lef, created 212 library cells
+[INFO ODB-0394] Duplicate site asap7sc7p5t in asap7sc7p5t_28_SL_1x_220121a already seen in asap7sc7p5t_28_R_1x_220121a
+[INFO ODB-0227] LEF file: /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lef/asap7sc7p5t_28_SL_1x_220121a.lef, created 212 library cells
+[WARNING ODB-0217] duplicate VIARULE (Pad_M9) ignoring...
+[WARNING ODB-0217] duplicate VIARULE (M9_M8) ignoring...
+[WARNING ODB-0217] duplicate VIARULE (M8_M7) ignoring...
+[WARNING ODB-0217] duplicate VIARULE (M7_M6) ignoring...
+[WARNING ODB-0217] duplicate VIARULE (M6_M5) ignoring...
+[WARNING ODB-0217] duplicate VIARULE (M3_M2widePWR0p936) ignoring...
+[WARNING ODB-0217] duplicate VIARULE (M4_M3widePWR0p864) ignoring...
+[WARNING ODB-0217] duplicate VIARULE (M5_M4widePWR0p864) ignoring...
+[WARNING ODB-0217] duplicate VIARULE (M6_M5widePWR1p152) ignoring...
+[WARNING ODB-0217] duplicate VIARULE (M7_M6widePWR1p152) ignoring...
+[WARNING ODB-0217] duplicate VIARULE (M2_M1) ignoring...
+[INFO ODB-0227] LEF file: /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lef/asap7_tech_1x_201209.lef
+[INFO ODB-0127] Reading DEF file: /home/huang_yu_hsiang/ISPD26-Contest/Benchmarks/aes_cipher_top/TCP_250_UTIL_0.40/contest.def
+[INFO ODB-0128] Design: aes_cipher_top
+[INFO ODB-0130]     Created 389 pins.
+[INFO ODB-0131]     Created 14635 components and 78144 component-terminals.
+[INFO ODB-0132]     Created 2 special nets and 29270 connections.
+[INFO ODB-0133]     Created 14306 nets and 48874 connections.
+[INFO ODB-0134] Finished DEF file: /home/huang_yu_hsiang/ISPD26-Contest/Benchmarks/aes_cipher_top/TCP_250_UTIL_0.40/contest.def
+[WARNING STA-0345] power scale 1e-03 does not match library scale 1e-12.
+ time 1ns
+ capacitance 1pF
+ resistance 1kohm
+ voltage 1v
+ current 1mA
+ power 1pW
+ distance 1um
+load cap before gateDelay: 6.11224e-16
+in slew: 2.37825e-11
+load cap: 6.11224e-16
+arc: B ^ -> Y v
+gate delay: 0.008
+driver slew: 0.014
+load cap before gateDelay: 6.13514e-16
+in slew: 1.22241e-11
+load cap: 6.13514e-16
+arc: B v -> Y ^
+gate delay: 0.008
+driver slew: 0.011
+load cap before gateDelay: 8.49881e-16
+in slew: 3.46227e-11
+load cap: 8.49881e-16
+arc: B ^ -> Y v
+gate delay: 0.010
+driver slew: 0.018
+load cap before gateDelay: 8.50146e-16
+in slew: 1.94384e-11
+load cap: 8.50146e-16
+arc: B v -> Y ^
+gate delay: 0.011
+driver slew: 0.015
+load cap before gateDelay: 6.11224e-16
+in slew: 3.73344e-11
+load cap: 6.11224e-16
+arc: A ^ -> Y v
+gate delay: 0.006
+driver slew: 0.015
+load cap before gateDelay: 6.13514e-16
+in slew: 1.66523e-11
+load cap: 6.13514e-16
+arc: A v -> Y ^
+gate delay: 0.010
+driver slew: 0.013
+load cap before gateDelay: 8.49881e-16
+in slew: 4.86472e-11
+load cap: 8.49881e-16
+arc: A ^ -> Y v
+gate delay: 0.008
+driver slew: 0.019
+load cap before gateDelay: 8.50146e-16
+in slew: 2.81512e-11
+load cap: 8.50146e-16
+arc: A v -> Y ^
+gate delay: 0.013
+driver slew: 0.019
+load cap before gateDelay: 1.44419e-15
+in slew: 1.36709e-11
+load cap: 1.44419e-15
+arc: E ^ -> Y ^
+gate delay: 0.028
+driver slew: 0.017
+load cap before gateDelay: 1.45703e-15
+in slew: 1.3666e-11
+load cap: 1.45703e-15
+arc: E v -> Y v
+gate delay: 0.020
+driver slew: 0.012
+load cap before gateDelay: 1.83364e-15
+in slew: 2.12516e-11
+load cap: 1.83364e-15
+arc: E ^ -> Y ^
+gate delay: 0.029
+driver slew: 0.020
+load cap before gateDelay: 1.81162e-15
+in slew: 1.96475e-11
+load cap: 1.81162e-15
+arc: E v -> Y v
+gate delay: 0.022
+driver slew: 0.014
+load cap before gateDelay: 1.44419e-15
+in slew: 1.476e-11
+load cap: 1.44419e-15
+arc: D ^ -> Y ^
+gate delay: 0.028
+driver slew: 0.017
+load cap before gateDelay: 1.45703e-15
+in slew: 1.34812e-11
+load cap: 1.45703e-15
+arc: D v -> Y v
+gate delay: 0.019
+driver slew: 0.011
+load cap before gateDelay: 1.83364e-15
+in slew: 2.06538e-11
+load cap: 1.83364e-15
+arc: D ^ -> Y ^
+gate delay: 0.029
+driver slew: 0.020
+load cap before gateDelay: 1.81162e-15
+in slew: 2.23535e-11
+load cap: 1.81162e-15
+arc: D v -> Y v
+gate delay: 0.022
+driver slew: 0.013
+load cap before gateDelay: 1.44419e-15
+in slew: 2.19985e-11
+load cap: 1.44419e-15
+arc: C ^ -> Y ^
+gate delay: 0.028
+driver slew: 0.017
+load cap before gateDelay: 1.45703e-15
+in slew: 1.07584e-11
+load cap: 1.45703e-15
+arc: C v -> Y v
+gate delay: 0.018
+driver slew: 0.011
+load cap before gateDelay: 1.83364e-15
+in slew: 3.00639e-11
+load cap: 1.83364e-15
+arc: C ^ -> Y ^
+gate delay: 0.030
+driver slew: 0.020
+load cap before gateDelay: 1.81162e-15
+in slew: 2.15048e-11
+load cap: 1.81162e-15
+arc: C v -> Y v
+gate delay: 0.021
+driver slew: 0.013
+load cap before gateDelay: 1.44419e-15
+in slew: 1.42722e-11
+load cap: 1.44419e-15
+arc: B ^ -> Y ^
+gate delay: 0.027
+driver slew: 0.017
+load cap before gateDelay: 1.45703e-15
+in slew: 1.2153e-11
+load cap: 1.45703e-15
+arc: B v -> Y v
+gate delay: 0.017
+driver slew: 0.011
+load cap before gateDelay: 1.83364e-15
+in slew: 1.80786e-11
+load cap: 1.83364e-15
+arc: B ^ -> Y ^
+gate delay: 0.028
+driver slew: 0.020
+load cap before gateDelay: 1.81162e-15
+in slew: 1.79044e-11
+load cap: 1.81162e-15
+arc: B v -> Y v
+gate delay: 0.019
+driver slew: 0.013
+load cap before gateDelay: 1.44419e-15
+in slew: 1.50612e-11
+load cap: 1.44419e-15
+arc: A ^ -> Y ^
+gate delay: 0.026
+driver slew: 0.017
+load cap before gateDelay: 1.45703e-15
+in slew: 1.26334e-11
+load cap: 1.45703e-15
+arc: A v -> Y v
+gate delay: 0.016
+driver slew: 0.011
+load cap before gateDelay: 1.83364e-15
+in slew: 1.99486e-11
+load cap: 1.83364e-15
+arc: A ^ -> Y ^
+gate delay: 0.028
+driver slew: 0.020
+load cap before gateDelay: 1.81162e-15
+in slew: 2.03536e-11
+load cap: 1.81162e-15
+arc: A v -> Y v
+gate delay: 0.019
+driver slew: 0.013
+tns max -277.65
+wns max -1.02
+Group                  Internal  Switching    Leakage      Total
+                          Power      Power      Power      Power (Watts)
+----------------------------------------------------------------
+Sequential             1.10e-02   2.28e-03   1.85e-05   1.33e-02  19.5%
+Combinational          2.39e-02   3.11e-02   9.06e-05   5.50e-02  80.5%
+Clock                  0.00e+00   0.00e+00   0.00e+00   0.00e+00   0.0%
+Macro                  0.00e+00   0.00e+00   0.00e+00   0.00e+00   0.0%
+Pad                    0.00e+00   0.00e+00   0.00e+00   0.00e+00   0.0%
+----------------------------------------------------------------
+Total                  3.49e-02   3.33e-02   1.09e-04   6.84e-02 100.0%
+                          51.1%      48.8%       0.2%
+set RC
+get pin slew for gate: NAND2xp5_ASAP7_75t_SL
+get pin arrival for gate: NAND2xp5_ASAP7_75t_SL
+<class 'src.diffGB.diffGB'>
+Gate: i43/i46/i50
+Master: NAND2xp5_ASAP7_75t_SL
+Pin: A
+Pin: B
+Pin: VDD
+Pin: VSS
+Pin: Y
+
+2.296851771277364e-11
+5.355650094448236e-16
+5.633400138786802e-16
+1.0856800332202264e-15
+1.127797581852144e-15
+Random Gate idx: 7243, name: i48/i61
+arc: A ^ -> Y ^
+getPinSlew: 1.994861394127856e-11
+getOutputPinLoad: 1.833635748392428e-15
+inPin: i48/i61/A  outPin: i48/i61/Y
+arc: A v -> Y v
+getPinSlew: 1.994861394127856e-11
+getOutputPinLoad: 1.833635748392428e-15
+inPin: i48/i61/A  outPin: i48/i61/Y
+arc: B ^ -> Y ^
+getPinSlew: 1.8078630606432888e-11
+getOutputPinLoad: 1.833635748392428e-15
+inPin: i48/i61/B  outPin: i48/i61/Y
+arc: B v -> Y v
+getPinSlew: 1.8078630606432888e-11
+getOutputPinLoad: 1.833635748392428e-15
+inPin: i48/i61/B  outPin: i48/i61/Y
+arc: C ^ -> Y ^
+getPinSlew: 3.006390275617221e-11
+getOutputPinLoad: 1.833635748392428e-15
+inPin: i48/i61/C  outPin: i48/i61/Y
+arc: C v -> Y v
+getPinSlew: 3.006390275617221e-11
+getOutputPinLoad: 1.833635748392428e-15
+inPin: i48/i61/C  outPin: i48/i61/Y
+arc: D ^ -> Y ^
+getPinSlew: 2.0653794646774415e-11
+getOutputPinLoad: 1.833635748392428e-15
+inPin: i48/i61/D  outPin: i48/i61/Y
+arc: D v -> Y v
+getPinSlew: 2.0653794646774415e-11
+getOutputPinLoad: 1.833635748392428e-15
+inPin: i48/i61/D  outPin: i48/i61/Y
+arc: E ^ -> Y ^
+getPinSlew: 2.1251587295489927e-11
+getOutputPinLoad: 1.833635748392428e-15
+inPin: i48/i61/E  outPin: i48/i61/Y
+arc: E v -> Y v
+getPinSlew: 2.1251587295489927e-11
+getOutputPinLoad: 1.833635748392428e-15
+inPin: i48/i61/E  outPin: i48/i61/Y
+Gate: i48/i61  using table: D -> Y
+Output Pin arrival: 1.7503044846822746e-10
+calculated arrival: 1.8679517654884847e-10
+golden gate delay: 2.9220206115843084e-11
+prop gate delay: 2.9220209585290036e-11
+calculated delay: 4.098493766591105e-11
+error rate:  0.4026231541087307
+4.098493766591105e-11
+
+end
+[WARNING UTL-0014] OpenROAD will terminate after the next control+C

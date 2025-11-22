@@ -24,3 +24,7 @@ namespace std {
 %include "stt/SteinerTreeBuilder.h"
 %include "stt/flute.h"
 %include "stt/pd.h"
+
+// Expose vectors for STL containers used by Tree so Python can access them.
+// In particular, Tree::branch is std::vector<stt::Branch>.
+%template(BranchVector) std::vector<stt::Branch>;
