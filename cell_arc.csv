@@ -1,0 +1,1 @@
+from_pin.full_name,to_pin.full_name,sense,delay_max_rise,delay_max_fall,variation_delay_max_rise.mean,variation_delay_max_rise.std_dev,variation_delay_max_fall.mean,variation_delay_max_fall.std_dev
