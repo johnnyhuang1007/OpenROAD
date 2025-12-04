@@ -1,0 +1,16 @@
+OpenROAD v2.0-24957-g62a80718d0 
+Features included (+) or not (-): +GPU +GUI +Python
+This program is licensed under the BSD-3 license. See the LICENSE file for details.
+Components of this program may be licensed under more restrictive licenses which must be honored.
+[WARNING ORD-0039] .openroad ignored with -python
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 13178, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 13211, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 13244, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 13277, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 13310, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 13343, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 13376, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 14772, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 14805, timing group from output port.
+[WARNING STA-1212] /home/huang_yu_hsiang/ISPD26-Contest/Platform/ASAP7/lib/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib line 14838, timing group from output port.
+[WARNING UTL-0014] OpenROAD will terminate after the next control+C
