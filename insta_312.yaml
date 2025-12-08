@@ -1,0 +1,39 @@
+name: insta_312
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  # 核心：指定 Python 3.12
+  - python=3.12
+  
+  # PyTorch (不鎖版本，讓它抓相容 3.12 的最新版)
+  - pytorch
+  - torchvision
+  - torchaudio
+  - pytorch-cuda=11.8
+  
+  # 關鍵工具 (移除所有 =x.x.x 鎖定)
+  - pyyaml
+  - numpy
+  - pandas
+  - matplotlib
+  - scipy
+  - scikit-learn
+  - transformers
+  - lightning-utilities
+  - torchmetrics
+  - tensorboard
+  - ipython
+  - jupyter
+  - tqdm
+  - networkx
+  - sympy
+  - seaborn
+  
+  # 讓 Conda 自動處理底層依賴 (不要手動列出 yarl, libuuid, expat 等)
+  
+  - pip
+  - pip:
+      - shapely
