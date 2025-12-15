@@ -989,7 +989,7 @@ GraphDelayCalc::findDriverArcDelays(Vertex *drvr_vertex,
     else {
       if(observed)
       {
-        std::cout<<"load cap before gateDelay: " << load_cap << std::endl;
+        //std::cout<<"load cap before gateDelay: " << load_cap << std::endl;
       }
       Vertex *from_vertex = edge->from(graph_);
       const Slew in_slew = edgeFromSlew(from_vertex, from_rf, edge, dcalc_ap);
@@ -999,12 +999,12 @@ GraphDelayCalc::findDriverArcDelays(Vertex *drvr_vertex,
                                                               dcalc_ap);
       if(observed)
       {
-        std::cout<<"in slew: " << in_slew << std::endl;
-        std::cout<<"load cap: " << load_cap << std::endl;
-        std::cout<<"arc: "<< arc->to_string() << std::endl;
-        std::cout<<"gate delay: " << delayAsString(dcalc_result.gateDelay(), this) << std::endl;
-        std::cout<<"driver slew: " << delayAsString(dcalc_result.drvrSlew(), this) << std::endl;
-        std::cout<<std::endl;
+        //std::cout<<"in slew: " << in_slew << std::endl;
+        //std::cout<<"load cap: " << load_cap << std::endl;
+        //std::cout<<"arc: "<< arc->to_string() << std::endl;
+        //std::cout<<"gate delay: " << delayAsString(dcalc_result.gateDelay(), this) << std::endl;
+        //std::cout<<"driver slew: " << delayAsString(dcalc_result.drvrSlew(), this) << std::endl;
+        //std::cout<<std::endl;
       }
       delay_changed |= annotateDelaysSlews(edge, arc, dcalc_result,
                                            load_pin_index_map, dcalc_ap);
