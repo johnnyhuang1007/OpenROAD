@@ -135,7 +135,13 @@ ReduceToPi::reduceToPi(const Parasitic *parasitic_network,
 
   double y1, y2, y3, dcap;
   double max_resistance = 0.0;
-
+  if (pin_name && std::strcmp(pin_name, dbg_reduce_pi_pin) == 0) {
+    std::printf("function: reduceToPi\n");
+    std::printf("[PI-DBG] %s starting at driver node %s\n",
+                pin_name,
+                parasitics_->name(drvr_node));
+    std::printf("init values: y1=0 y2=0 y3=0 dcap=0 rd=0\n");
+  }
   reducePiDfs(drvr_pin, drvr_node, nullptr, 0.0,
               y1, y2, y3, dcap, max_resistance);
 
@@ -156,7 +162,11 @@ ReduceToPi::reduceToPi(const Parasitic *parasitic_network,
 
 
   
-
+  if (pin_name && std::strcmp(pin_name, dbg_reduce_pi_pin) == 0) {
+    std::printf("function: reduceToPi\n");
+    std::printf("[PI-DBG] %s final y1=%g y2=%g y3=%g c1=%g c2=%g rpi=%g rd=%g\n",
+                pin_name, y1, y2, y3, c1, c2, rpi, max_resistance);
+  }
 }
 
 
@@ -188,7 +198,19 @@ ReduceToPi::reducePiDfs(const Pin *drvr_pin,
   for (ParasiticResistor *resistor : R)
     r_dbg += parasitics_->value(resistor);
 
-
+  if (pin_name && std::strcmp(pin_name, dbg_reduce_pi_pin) == 0) {
+    std::printf("[PI-DBG] %s node %s gnd_cap=%.3g coup_cap=%.3g coup_fac=%.3g pin_cap=%.3g total_cap=%.3g resistance=%.3g\n",
+                pin_name,
+                parasitics_->name(node),
+                parasitics_->nodeGndCap(node),
+                coupling_cap * coupling_cap_multiplier_,
+        
+                pinCapacitance(node),
+                dwn_cap,
+                r_dbg
+                ); 
+  }
+  
   y1 = dwn_cap;
   y2 = y3 = 0.0;
   max_resistance = max(max_resistance, src_resistance);
@@ -217,6 +239,10 @@ ReduceToPi::reducePiDfs(const Pin *drvr_pin,
           y2 += yd2 - r * yd1 * yd1;
           y3 += yd3 - 2 * r * yd1 * yd2 + r * r * yd1 * yd1 * yd1;
           dwn_cap += dcap;
+          if (pin_name && std::strcmp(pin_name, dbg_reduce_pi_pin) == 0) {
+            std::printf("r/y1/y2/y3: %.3g / %.3g / %.3g / %.3g\n",
+                  r, yd1, yd2, yd3);
+          }
         }
       }
     }
@@ -232,7 +258,17 @@ ReduceToPi::reducePiDfs(const Pin *drvr_pin,
              " node %s y1=%.3g y2=%.3g y3=%.3g cap=%.3g",
              parasitics_->name(node), y1, y2, y3, dwn_cap);
 
-
+  
+  if (pin_name && std::strcmp(pin_name, dbg_reduce_pi_pin) == 0) {
+    double c1 = 0.0, c2 = 0.0, rpi = 0.0;
+    if (y2 != 0.0 && y3 != 0.0) {
+      c1 = y2 * y2 / y3;
+      c2 = y1 - c1;
+      rpi = - y3 * y3 / (y2 * y2 * y2); // or -(y3*y3)/(y2*y2*y2) if you prefer
+    }
+    std::printf("[PI-DBG] %s y1=%g y2=%g y3=%g c1=%g c2=%g rpi=%g rd=%g\n",
+                pin_name, y1, y2, y3, c1, c2, rpi, max_resistance);
+  }
 }
 
 float

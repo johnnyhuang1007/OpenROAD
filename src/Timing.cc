@@ -728,6 +728,54 @@ float Timing::gateScaleFactor(odb::dbInst* inst)
 
   return lib->scaleFactor(sta::ScaleFactorType::cell, lib_cell, pvt);
 }
+
+float Timing::getPinActivityDensity(odb::dbITerm* db_pin)
+{
+  if (db_pin == nullptr) {
+    return 0.0f;
+  }
+
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta::Pin* sta_pin = network->dbToSta(db_pin);
+  if (sta_pin == nullptr) {
+    return 0.0f;
+  }
+
+  return sta->activity(sta_pin).density();
+}
+
+float Timing::getVoltage()
+{
+  sta::dbSta* sta = getSta();
+  const sta::MinMax* mm = getMinMax(Max);
+
+  // 確保 OC 存在：用預設 liberty 的 default operating_conditions
+  if (sta->operatingConditions(mm) == nullptr) {
+    sta::LibertyLibrary* lib = sta->network()->defaultLibertyLibrary();
+    if (lib) {
+      sta::OperatingConditions* oc = lib->defaultOperatingConditions();
+      if (oc) {
+        sta->setOperatingConditions(oc, sta::MinMaxAll::all());
+      }
+    }
+  }
+
+  sta::Corner* corner = getCorners()[0];
+  if (!corner) {
+    std::cout<<"No current corner."<<std::endl;
+    return 0.0f;
+  }
+
+  const sta::DcalcAnalysisPt* dcalc_ap = corner->findDcalcAnalysisPt(mm);
+  if (!dcalc_ap || dcalc_ap->operatingConditions() == nullptr) {
+    std::cout<<"Operating conditions not set for max."<<std::endl;
+    return 0.0f;
+  }
+
+  return dcalc_ap->operatingConditions()->voltage();
+}
+
 //dmp_ceff_elmore
 float Timing::ScaleFactor(odb::dbInst* inst, TimingArcTableModel& _arcTableModel, std::string type)
 {

@@ -13,6 +13,7 @@
 #include <set>
 #include <utility>
 #include <vector>
+#include <iostream>
 
 #include "AbstractSteinerRenderer.h"
 #include "EstimateParasiticsCallBack.h"
@@ -656,6 +657,8 @@ void EstimateParasitics::makePadParasitic(const Net* net,
   parasitics_->deleteParasiticNetworks(net);
 }
 
+
+//used function
 void EstimateParasitics::estimateWireParasiticSteiner(const Pin* drvr_pin,
                                                       const Net* net,
                                                       SpefWriter* spef_writer)

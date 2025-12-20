@@ -10,6 +10,7 @@
 #include "sta/PatternMatch.hh"
 #include "sta/Sdc.hh"
 #include "sta/SdcClass.hh"
+#include "sta/PowerClass.hh"
 
 namespace odb {
 class dbMaster;
@@ -119,6 +120,8 @@ class Timing
   std::vector<TimingArcTableModel> getCellCurrentTableModels(odb::dbInst* inst);
   std::vector<TimingArcTableModel> getLibertyCellTableModels(odb::dbMaster* master);
   float gateScaleFactor(odb::dbInst* inst); //gate delay or slew = scale * table value
+  float getPinActivityDensity(odb::dbITerm* db_pin);
+  float getVoltage();
   // Enable common STA debug categories at a reasonable verbosity.
   // This only toggles STA-side debugPrint categories.
   void enableDebugPrinting();
