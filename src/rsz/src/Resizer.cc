@@ -4406,6 +4406,121 @@ void Resizer::rebufferNet(const Pin* drvr_pin)
   buffer_move_->rebufferNet(drvr_pin);
 }
 
+std::vector<dbNet*> Resizer::buffering(std::vector<dbITerm*> lhs_pins,
+                                      std::vector<dbITerm*> rhs_pins,
+                                      LibertyCell* buffer_cell,
+                                      dbNet* original_net)
+{
+  resizePreamble();
+
+  if (buffer_cell == nullptr) {
+    logger_->error(RSZ, 216, "buffering: buffer_cell is null.");
+  }
+  if (original_net == nullptr) {
+    logger_->error(RSZ, 217, "buffering: original net is null.");
+  }
+
+  // Disallow overlaps between lhs/rhs.
+  std::unordered_set<dbITerm*> lhs_set;
+  lhs_set.reserve(lhs_pins.size());
+  for (dbITerm* iterm : lhs_pins) {
+    if (iterm) {
+      lhs_set.insert(iterm);
+    }
+  }
+  for (dbITerm* iterm : rhs_pins) {
+    if (iterm && lhs_set.count(iterm) != 0U) {
+      logger_->error(RSZ,
+                     220,
+                     "buffering: lhs/rhs pin overlap on iterm {}.",
+                     iterm->getName());
+    }
+  }
+
+  // Find exactly one driver in lhs_pins.
+  dbITerm* db_drvr_iterm = nullptr;
+  for (dbITerm* iterm : lhs_pins) {
+    if (iterm && iterm->isOutputSignal()) {
+      if (db_drvr_iterm != nullptr) {
+        logger_->error(RSZ,
+                       219,
+                       "buffering: multiple drivers in lhs_pins on net {}.",
+                       original_net->getName());
+      }
+      db_drvr_iterm = iterm;
+    }
+  }
+  if (db_drvr_iterm == nullptr) {
+    logger_->error(RSZ,
+                   218,
+                   "buffering: no driver found in lhs_pins on net {}.",
+                   original_net->getName());
+  }
+
+  // Driver pin buffering:
+  //
+  //     (lhs_net)                     (original_net)
+  // driver ------ buffer_in  buffer_out ----- rhs loads
+  //
+  Pin* drvr_pin = db_network_->dbToSta(db_drvr_iterm);
+  Instance* parent = db_network_->getOwningInstanceParent(drvr_pin);
+  Net* lhs_net = db_network_->makeNet(parent);
+  dbNet* lhs_net_db = db_network_->staToDb(lhs_net);
+  lhs_net_db->setSigType(original_net->getSigType());
+  Net* rhs_net = db_network_->dbToSta(original_net);
+
+  // Move all lhs pins to the new net.
+  for (dbITerm* iterm : lhs_pins) {
+    if (iterm == nullptr) {
+      continue;
+    }
+    Pin* pin = db_network_->dbToSta(iterm);
+    if (pin == nullptr) {
+      continue;
+    }
+    db_network_->disconnectPin(pin);
+    db_network_->connectPin(pin, lhs_net);
+  }
+
+  // Insert the buffer in the driver parent and connect it between lhs/rhs nets.
+  const Point drvr_loc = db_network_->location(drvr_pin);
+  Instance* buffer = makeBuffer(buffer_cell, "buffering", parent, drvr_loc);
+  inserted_buffer_count_++;
+
+  LibertyPort *input, *output;
+  buffer_cell->bufferPorts(input, output);
+  Pin* buffer_in_pin = network_->findPin(buffer, input);
+  Pin* buffer_out_pin = network_->findPin(buffer, output);
+  if (buffer_in_pin == nullptr || buffer_out_pin == nullptr) {
+    logger_->error(RSZ,
+                   221,
+                   "buffering: failed to find buffer pins for cell {}.",
+                   buffer_cell->name());
+  }
+
+  db_network_->connectPin(buffer_in_pin, lhs_net);
+  db_network_->connectPin(buffer_out_pin, rhs_net);
+
+  // Ensure rhs pins end up on the original net (rhs_net).
+  for (dbITerm* iterm : rhs_pins) {
+    if (iterm == nullptr || iterm->getNet() == original_net) {
+      continue;
+    }
+    Pin* pin = db_network_->dbToSta(iterm);
+    if (pin == nullptr) {
+      continue;
+    }
+    db_network_->disconnectPin(pin);
+    db_network_->connectPin(pin, rhs_net);
+  }
+
+  std::vector<dbNet*> split_nets(2);
+  split_nets[0] = lhs_net_db;
+  split_nets[1] = original_net;
+  return split_nets;
+}
+
+
 ////////////////////////////////////////////////////////////////
 
 bool Resizer::repairHold(

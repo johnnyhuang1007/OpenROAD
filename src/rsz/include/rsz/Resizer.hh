@@ -38,6 +38,7 @@ using utl::Logger;
 using odb::dbBlock;
 using odb::dbDatabase;
 using odb::dbInst;
+using odb::dbITerm;
 using odb::dbMaster;
 using odb::dbNet;
 using odb::dbTechLayer;
@@ -296,6 +297,11 @@ class Resizer : public dbStaState, public dbNetworkObserver
   // Rebuffer one net (for testing).
   // resizerPreamble() required.
   void rebufferNet(const Pin* drvr_pin);
+
+  std::vector<dbNet*> buffering(std::vector<dbITerm*> lhs_pins,
+                                std::vector<dbITerm*> rhs_pins,
+                                LibertyCell* buffer_cell,
+                                dbNet* orginalNet);
 
   ////////////////////////////////////////////////////////////////
 
