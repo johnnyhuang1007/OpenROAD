@@ -4406,10 +4406,11 @@ void Resizer::rebufferNet(const Pin* drvr_pin)
   buffer_move_->rebufferNet(drvr_pin);
 }
 
-std::vector<dbNet*> Resizer::buffering(std::vector<dbITerm*> lhs_pins,
+buffering_data Resizer::buffering(std::vector<dbITerm*> lhs_pins,
                                       std::vector<dbITerm*> rhs_pins,
                                       LibertyCell* buffer_cell,
-                                      dbNet* original_net)
+                                      dbNet* original_net,
+                                      int x, int y)
 {
   resizePreamble();
 
@@ -4459,18 +4460,19 @@ std::vector<dbNet*> Resizer::buffering(std::vector<dbITerm*> lhs_pins,
 
   // Driver pin buffering:
   //
-  //     (lhs_net)                     (original_net)
+  //     (original)                     (new)
   // driver ------ buffer_in  buffer_out ----- rhs loads
   //
   Pin* drvr_pin = db_network_->dbToSta(db_drvr_iterm);
   Instance* parent = db_network_->getOwningInstanceParent(drvr_pin);
-  Net* lhs_net = db_network_->makeNet(parent);
-  dbNet* lhs_net_db = db_network_->staToDb(lhs_net);
-  lhs_net_db->setSigType(original_net->getSigType());
-  Net* rhs_net = db_network_->dbToSta(original_net);
+  Net* lhs_net = db_network_->dbToSta(original_net);
+  dbNet* lhs_net_db = original_net;
+  Net* rhs_net = db_network_->makeNet(parent);
+  dbNet* rhs_net_db = db_network_->staToDb(rhs_net);
+  rhs_net_db->setSigType(original_net->getSigType());
 
-  // Move all lhs pins to the new net.
-  for (dbITerm* iterm : lhs_pins) {
+  // Move all rhs pins to the new net.
+  for (dbITerm* iterm : rhs_pins) {
     if (iterm == nullptr) {
       continue;
     }
@@ -4479,11 +4481,11 @@ std::vector<dbNet*> Resizer::buffering(std::vector<dbITerm*> lhs_pins,
       continue;
     }
     db_network_->disconnectPin(pin);
-    db_network_->connectPin(pin, lhs_net);
+    db_network_->connectPin(pin, rhs_net);
   }
 
   // Insert the buffer in the driver parent and connect it between lhs/rhs nets.
-  const Point drvr_loc = db_network_->location(drvr_pin);
+  const Point drvr_loc = Point(x, y);
   Instance* buffer = makeBuffer(buffer_cell, "buffering", parent, drvr_loc);
   inserted_buffer_count_++;
 
@@ -4501,8 +4503,8 @@ std::vector<dbNet*> Resizer::buffering(std::vector<dbITerm*> lhs_pins,
   db_network_->connectPin(buffer_in_pin, lhs_net);
   db_network_->connectPin(buffer_out_pin, rhs_net);
 
-  // Ensure rhs pins end up on the original net (rhs_net).
-  for (dbITerm* iterm : rhs_pins) {
+  // Ensure lhs pins end up on the original net (lhs_net).
+  for (dbITerm* iterm : lhs_pins) {
     if (iterm == nullptr || iterm->getNet() == original_net) {
       continue;
     }
@@ -4511,13 +4513,15 @@ std::vector<dbNet*> Resizer::buffering(std::vector<dbITerm*> lhs_pins,
       continue;
     }
     db_network_->disconnectPin(pin);
-    db_network_->connectPin(pin, rhs_net);
+    db_network_->connectPin(pin, lhs_net);
   }
 
-  std::vector<dbNet*> split_nets(2);
-  split_nets[0] = lhs_net_db;
-  split_nets[1] = original_net;
-  return split_nets;
+  buffering_data result;
+  result.lhs_net = lhs_net_db;
+  result.rhs_net = rhs_net_db;
+  result.buffer_in = db_network_->flatPin(buffer_in_pin);
+  result.buffer_out = db_network_->flatPin(buffer_out_pin);
+  return result;
 }
 
 

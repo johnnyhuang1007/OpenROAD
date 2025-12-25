@@ -423,6 +423,7 @@ if (Python3_FOUND AND BUILD_PYTHON)
     fin_py
     rcx_py
     rmp_py
+    rsz_py
     stt_py
     psm_py
     pdn_py

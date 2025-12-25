@@ -188,6 +188,14 @@ struct VTLeakageStats
   }
 };
 
+struct buffering_data
+{
+  dbNet* lhs_net; //orignal net
+  dbNet* rhs_net; //new net
+  dbITerm* buffer_in;
+  dbITerm* buffer_out;
+};
+
 // Complete analysis data for a library
 struct LibraryAnalysisData
 {
@@ -298,10 +306,11 @@ class Resizer : public dbStaState, public dbNetworkObserver
   // resizerPreamble() required.
   void rebufferNet(const Pin* drvr_pin);
 
-  std::vector<dbNet*> buffering(std::vector<dbITerm*> lhs_pins,
+  buffering_data buffering(std::vector<dbITerm*> lhs_pins,
                                 std::vector<dbITerm*> rhs_pins,
                                 LibertyCell* buffer_cell,
-                                dbNet* orginalNet);
+                                dbNet* orginalNet,
+                                int x, int y);
 
   ////////////////////////////////////////////////////////////////
 

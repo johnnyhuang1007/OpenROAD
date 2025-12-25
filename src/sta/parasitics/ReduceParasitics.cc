@@ -104,7 +104,7 @@ ReduceToPi::ReduceToPi(StaState *sta) :
   pin_caps_one_value_(true)
 {
 }
-static const char *dbg_reduce_pi_pin = "input126/Y";
+static const char *dbg_reduce_pi_pin = "i43/i11/Y";
 // "Modeling the Driving-Point Characteristic of Resistive
 // Interconnect for Accurate Delay Estimation", Peter O'Brien and
 // Thomas Savarino, Proceedings of the 1989 Design Automation
@@ -204,7 +204,7 @@ ReduceToPi::reducePiDfs(const Pin *drvr_pin,
                 parasitics_->name(node),
                 parasitics_->nodeGndCap(node),
                 coupling_cap * coupling_cap_multiplier_,
-        
+                coupling_cap_multiplier_,
                 pinCapacitance(node),
                 dwn_cap,
                 r_dbg
@@ -266,8 +266,8 @@ ReduceToPi::reducePiDfs(const Pin *drvr_pin,
       c2 = y1 - c1;
       rpi = - y3 * y3 / (y2 * y2 * y2); // or -(y3*y3)/(y2*y2*y2) if you prefer
     }
-    std::printf("[PI-DBG] %s y1=%g y2=%g y3=%g c1=%g c2=%g rpi=%g rd=%g\n",
-                pin_name, y1, y2, y3, c1, c2, rpi, max_resistance);
+    std::printf("[PI-DBG] computed_result %s %s y1=%g y2=%g y3=%g c1=%g c2=%g rpi=%g rd=%g\n",
+                pin_name, parasitics_->name(node), y1, y2, y3, c1, c2, rpi, max_resistance);
   }
 }
 

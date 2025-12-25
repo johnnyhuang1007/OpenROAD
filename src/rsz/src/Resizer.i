@@ -62,10 +62,34 @@ using sta::Network;
 using sta::stringEq;
 
 using rsz::Resizer;
+using rsz::buffering_data;
 %}
 
+#ifdef SWIGTCL
 // OpenSTA swig files
 %include "tcl/StaTclTypes.i"
+#endif
+
+#ifdef SWIGPYTHON
+%include <std_vector.i>
+%import "odb.i"
+
+namespace std {
+%template(dbITermVector) vector<odb::dbITerm*>;
+}
+
+#ifdef SWIG
+namespace rsz {
+struct buffering_data
+{
+  odb::dbNet* lhs_net;
+  odb::dbNet* rhs_net;
+  odb::dbITerm* buffer_in;
+  odb::dbITerm* buffer_out;
+};
+} // namespace rsz
+#endif
+#endif
 
 ////////////////////////////////////////////////////////////////
 //
@@ -73,6 +97,7 @@ using rsz::Resizer;
 //
 ////////////////////////////////////////////////////////////////
 
+#ifdef SWIGTCL
 %typemap(out) TmpNetSeq* {
   NetSeq *nets = $1;
   seqPtrTclList<NetSeq, Net>(nets, SWIGTYPE_p_Net, interp);
@@ -89,6 +114,7 @@ using rsz::Resizer;
   const char* str = Tcl_GetString($input);
   $1 = Resizer::parseMoveSequence(std::string(str));
 }
+#endif
 
 
 
@@ -98,9 +124,15 @@ using rsz::Resizer;
 //
 ////////////////////////////////////////////////////////////////
 
+#ifdef SWIGTCL
 %include "../../Exception.i"
+#endif
+#ifdef SWIGPYTHON
+%include "../../Exception-py.i"
+#endif
 %include "std_string.i"
 
+#ifdef SWIGTCL
 %inline %{
 
 namespace rsz {
@@ -654,6 +686,58 @@ fully_rebuffer(Pin *pin)
   resizer->fullyRebuffer(pin);
 }
 
-} // namespace
+buffering_data
+buffering(std::vector<odb::dbITerm*> lhs_pins,
+          std::vector<odb::dbITerm*> rhs_pins,
+          odb::dbMaster* buffer_master,
+          odb::dbNet* orginalNet,
+          int x, int y)
+{
+  ensureLinked();
+  Resizer* resizer = getResizer();
+  LibertyCell* buffer_cell = nullptr;
+  if (buffer_master != nullptr) {
+    dbNetwork* db_network = resizer->getDbNetwork();
+    auto* cell = db_network->dbToSta(buffer_master);
+    buffer_cell = db_network->libertyCell(cell);
+  }
+  buffering_data result = resizer->buffering(lhs_pins, rhs_pins,
+                                               buffer_cell, orginalNet, x, y);
+  return result;
+} // buffering
+
+} // namespace rsz
 
 %} // inline
+#endif
+
+#ifdef SWIGPYTHON
+%rename(buffering) buffering_py;
+%inline %{
+
+namespace rsz {
+
+buffering_data
+buffering_py(std::vector<odb::dbITerm*> lhs_pins,
+             std::vector<odb::dbITerm*> rhs_pins,
+             odb::dbMaster* buffer_master,
+             odb::dbNet* orginalNet,
+             int x, int y)
+{
+  ensureLinked();
+  Resizer* resizer = getResizer();
+  LibertyCell* buffer_cell = nullptr;
+  if (buffer_master != nullptr) {
+    dbNetwork* db_network = resizer->getDbNetwork();
+    auto* cell = db_network->dbToSta(buffer_master);
+    buffer_cell = db_network->libertyCell(cell);
+  }
+  buffering_data result = resizer->buffering(lhs_pins, rhs_pins,
+                                             buffer_cell, orginalNet, x, y);
+  return result;
+} // buffering_py
+
+} // namespace rsz
+
+%} // inline
+#endif

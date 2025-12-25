@@ -82,6 +82,33 @@ target_link_libraries(rsz
     utl_lib
 )
 
+if (Python3_FOUND AND BUILD_PYTHON)
+  swig_lib(NAME          rsz_py
+           NAMESPACE     rsz
+           LANGUAGE      python
+           I_FILE        Resizer.i
+           SWIG_INCLUDES ${OPENSTA_HOME}
+                         ${ODB_HOME}/src/swig/common
+                         ${ODB_HOME}/src/swig/python
+                         ${ODB_HOME}/include
+           SCRIPTS       ${CMAKE_CURRENT_BINARY_DIR}/rsz_py.py
+  )
+
+  target_include_directories(rsz_py
+    PUBLIC
+      ../include
+    PRIVATE
+      ${OPENSTA_HOME}
+      ${OPENSTA_HOME}/include/sta
+      .
+  )
+
+  target_link_libraries(rsz_py
+    PUBLIC
+      rsz
+  )
+endif()
+
 messages(
   TARGET rsz
   OUTPUT_DIR ..
