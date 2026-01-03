@@ -259,6 +259,73 @@ void appendArcTableModels(const sta::TimingArcSetSeq& arc_sets,
   }
 }
 
+void appendCheckTableModels(const sta::TimingArcSetSeq& arc_sets,
+                            sta::Corner* corner,
+                            const sta::MinMax* min_max_fallback,
+                            std::vector<ord::TimingCheckTableModel>& tables)
+{
+  if (corner == nullptr) {
+    return;
+  }
+
+  for (const sta::TimingArcSet* arc_set : arc_sets) {
+    if (arc_set == nullptr) {
+      continue;
+    }
+    for (const sta::TimingArc* arc : arc_set->arcs()) {
+      if (arc == nullptr) {
+        continue;
+      }
+      const sta::TimingRole* role = arc->role();
+      if (role == nullptr || !role->isTimingCheck()) {
+        continue;
+      }
+
+      const sta::MinMax* min_max = role->pathMinMax();
+      if (min_max == nullptr) {
+        min_max = min_max_fallback;
+      }
+      if (min_max == nullptr) {
+        continue;
+      }
+
+      const sta::DcalcAnalysisPt* dcalc_ap = corner->findDcalcAnalysisPt(min_max);
+      if (dcalc_ap == nullptr) {
+        continue;
+      }
+
+      sta::CheckTimingModel* check_model = arc->checkModel(dcalc_ap);
+      if (check_model == nullptr) {
+        continue;
+      }
+
+      auto* check_table = dynamic_cast<sta::CheckTableModel*>(check_model);
+      if (check_table == nullptr) {
+        continue;
+      }
+
+      const sta::TableModel* model = check_table->model();
+      if (model == nullptr) {
+        continue;
+      }
+
+      ord::TimingCheckTableModel entry;
+      entry.arc_description = arc->to_string();
+      entry.from_pin_name = arc->from()->name();
+      entry.to_pin_name = arc->to()->name();
+      entry.from_rf = arc->fromEdge()->to_string();
+      entry.to_rf = arc->toEdge()->to_string();
+      entry.role = role->to_string();
+      entry.table_axis0 = axisValues(model, 0);
+      entry.table_axis1 = axisValues(model, 1);
+      entry.constraint_table = tableValues(model);
+      entry.constraint_model = model;
+
+      tables.push_back(std::move(entry));
+    }
+  }
+}
+
 }  // namespace
 
 namespace ord {
@@ -341,6 +408,13 @@ std::vector<float> TimingArcTableModel::findOutputSlewGradients(float axis0_valu
 
 
   return gradients;
+}
+
+float TimingCheckTableModel::findCheckValue(float axis0_value,
+                                            float axis1_value) const
+{
+  return interpolateTable(table_axis0, table_axis1, constraint_table, axis0_value,
+                          axis1_value);
 }
 
 Timing::Timing(Design* design) : design_(design)
@@ -694,6 +768,43 @@ std::vector<TimingArcTableModel> Timing::getLibertyCellTableModels(odb::dbMaster
     return tables;
   }
   appendArcTableModels(lib_cell->timingArcSets(), tables);
+  return tables;
+}
+
+std::vector<TimingCheckTableModel> Timing::getLibertyCellCheckTableModels(
+    odb::dbMaster* master)
+{
+  std::vector<TimingCheckTableModel> tables;
+  if (master == nullptr) {
+    return tables;
+  }
+
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta::Cell* sta_cell = network->dbToSta(master);
+  if (sta_cell == nullptr) {
+    return tables;
+  }
+
+  sta::LibertyCell* lib_cell = network->libertyCell(sta_cell);
+  if (lib_cell == nullptr) {
+    return tables;
+  }
+
+  sta::Corner* corner = cmdCorner();
+  if (corner == nullptr) {
+    const auto corners = getCorners();
+    if (!corners.empty()) {
+      corner = corners.front();
+    }
+  }
+  if (corner == nullptr) {
+    return tables;
+  }
+
+  const sta::MinMax* min_max_fallback = getMinMax(Max);
+  appendCheckTableModels(lib_cell->timingArcSets(), corner, min_max_fallback,
+                         tables);
   return tables;
 }
 

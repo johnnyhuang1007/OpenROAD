@@ -61,6 +61,23 @@ struct TimingArcTableModel
                                                float axis1_value) const;
 };
 
+struct TimingCheckTableModel
+{
+  std::string arc_description;
+  std::string from_pin_name;
+  std::string to_pin_name;
+  std::string from_rf;
+  std::string to_rf;
+  std::string role;
+  std::vector<float> table_axis0;
+  std::vector<float> table_axis1;
+  std::vector<std::vector<float>> constraint_table;
+
+  const sta::TableModel* constraint_model;  // for internal use only
+
+  float findCheckValue(float axis0_value, float axis1_value) const;
+};
+
 class Timing
 {
  public:
@@ -119,6 +136,7 @@ class Timing
                                                            odb::dbMTerm* to_pin); //at least 2 r/f f/r
   std::vector<TimingArcTableModel> getCellCurrentTableModels(odb::dbInst* inst);
   std::vector<TimingArcTableModel> getLibertyCellTableModels(odb::dbMaster* master);
+  std::vector<TimingCheckTableModel> getLibertyCellCheckTableModels(odb::dbMaster* master);
   float gateScaleFactor(odb::dbInst* inst); //gate delay or slew = scale * table value
   float getPinActivityDensity(odb::dbITerm* db_pin);
   float getVoltage();

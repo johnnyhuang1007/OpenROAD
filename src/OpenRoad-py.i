@@ -53,6 +53,7 @@ get_db_block();
 %template(FloatVector) std::vector<float>;
 %template(FloatMatrix) std::vector<std::vector<float>>;
 %template(TimingArcTableModels) std::vector<ord::TimingArcTableModel>;
+%template(TimingCheckTableModels) std::vector<ord::TimingCheckTableModel>;
 
 %include "Exception-py.i"
 %include "ord/Tech.h"
