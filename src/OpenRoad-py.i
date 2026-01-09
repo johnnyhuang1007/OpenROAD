@@ -56,6 +56,11 @@ get_db_block();
 %include "ord/Design.h"
 %include "ord/Timing.h"
 
+%template(FloatVector) std::vector<float>;
+%template(FloatVectorVector) std::vector<std::vector<float>>;
+%template(TimingArcTableModels) std::vector<ord::TimingArcTableModel>;
+%template(TimingCheckTableModels) std::vector<ord::TimingCheckTableModel>;
+
 #ifdef BAZEL
 %include "src/gpl/src/replace-py.i"
 %include "src/ifp/src/InitFloorplan-py.i"

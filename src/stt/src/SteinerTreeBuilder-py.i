@@ -24,3 +24,5 @@ namespace std {
 %include "stt/SteinerTreeBuilder.h"
 %include "stt/flute.h"
 %include "stt/pd.h"
+
+%template(Branches) std::vector<stt::Branch>;
