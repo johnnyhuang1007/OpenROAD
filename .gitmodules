@@ -1,9 +1,7 @@
-[submodule "module/OpenSTA"]
-	path = src/sta
-	url = ../../The-OpenROAD-Project/OpenSTA.git
 [submodule "src/abc"]
 	path = third-party/abc
 	url = ../../The-OpenROAD-Project/abc.git
 [submodule "src/sta"]
 	url = git@github.com:johnnyhuang1007/OpenSTA.git
 	branch = ispd26-dev
+	path = src/sta
