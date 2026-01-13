@@ -49,6 +49,7 @@ get_db_block();
 
 %template(Corners) std::vector<sta::Corner*>;
 %template(MTerms) std::vector<odb::dbMTerm*>;
+%template(ITerms) std::vector<odb::dbITerm*>;
 %template(Masters) std::vector<odb::dbMaster*>;
 
 %include "Exception-py.i"

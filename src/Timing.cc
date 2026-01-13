@@ -544,6 +544,18 @@ float Timing::getPinSlew(sta::Pin* sta_pin, const sta::RiseFall* rf, MinMax minm
   return pin_slew;
 }
 
+std::vector<float> Timing::getPinSlews(const std::vector<odb::dbITerm*>& db_pins,
+                                       RiseFall rf,
+                                       MinMax minmax)
+{
+  std::vector<float> slews;
+  slews.reserve(db_pins.size());
+  for (auto* db_pin : db_pins) {
+    slews.push_back(getPinSlew(db_pin, rf, minmax));
+  }
+  return slews;
+}
+
 sta::Network* Timing::cmdLinkedNetwork()
 {
   sta::Network* network = getSta()->cmdNetwork();
@@ -631,6 +643,18 @@ float Timing::getPinArrival(odb::dbBTerm* db_pin, RiseFall rf, MinMax minmax)
   sta::dbSta* sta = getSta();
   sta::Pin* sta_pin = sta->getDbNetwork()->dbToSta(db_pin);
   return getPinArrival(sta_pin, rf, minmax);
+}
+
+std::vector<float> Timing::getPinArrivals(const std::vector<odb::dbITerm*>& db_pins,
+                                          RiseFall rf,
+                                          MinMax minmax)
+{
+  std::vector<float> arrivals;
+  arrivals.reserve(db_pins.size());
+  for (auto* db_pin : db_pins) {
+    arrivals.push_back(getPinArrival(db_pin, rf, minmax));
+  }
+  return arrivals;
 }
 
 float Timing::getPinArrival(sta::Pin* sta_pin, RiseFall rf, MinMax minmax)
@@ -932,6 +956,18 @@ float Timing::getPinSlack(odb::dbBTerm* db_pin, RiseFall rf, MinMax minmax)
   sta::dbSta* sta = getSta();
   sta::Pin* sta_pin = sta->getDbNetwork()->dbToSta(db_pin);
   return getPinSlack(sta_pin, rf, minmax);
+}
+
+std::vector<float> Timing::getPinSlacks(const std::vector<odb::dbITerm*>& db_pins,
+                                        RiseFall rf,
+                                        MinMax minmax)
+{
+  std::vector<float> slacks;
+  slacks.reserve(db_pins.size());
+  for (auto* db_pin : db_pins) {
+    slacks.push_back(getPinSlack(db_pin, rf, minmax));
+  }
+  return slacks;
 }
 
 float Timing::getPinSlack(sta::Pin* sta_pin, RiseFall rf, MinMax minmax)

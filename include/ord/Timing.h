@@ -99,6 +99,9 @@ class Timing
                                    bool nocase);
   float getPinArrival(odb::dbITerm* db_pin, RiseFall rf, MinMax minmax = Max);
   float getPinArrival(odb::dbBTerm* db_pin, RiseFall rf, MinMax minmax = Max);
+  std::vector<float> getPinArrivals(const std::vector<odb::dbITerm*>& db_pins,
+                                    RiseFall rf,
+                                    MinMax minmax = Max);
   bool isTimeInf(float time);
 
   float getPinSlew(odb::dbITerm* db_pin, MinMax minmax = Max);
@@ -108,8 +111,14 @@ class Timing
   // specified transition and min/max selection across all corners.
   float getPinSlew(odb::dbITerm* db_pin, RiseFall rf, MinMax minmax = Max);
   float getPinSlew(odb::dbBTerm* db_pin, RiseFall rf, MinMax minmax = Max);
+  std::vector<float> getPinSlews(const std::vector<odb::dbITerm*>& db_pins,
+                                 RiseFall rf,
+                                 MinMax minmax = Max);
   float getPinSlack(odb::dbITerm* db_pin, RiseFall rf, MinMax minmax = Max);
   float getPinSlack(odb::dbBTerm* db_pin, RiseFall rf, MinMax minmax = Max);
+  std::vector<float> getPinSlacks(const std::vector<odb::dbITerm*>& db_pins,
+                                  RiseFall rf,
+                                  MinMax minmax = Max);
 
   bool isEndpoint(odb::dbITerm* db_pin);
   bool isEndpoint(odb::dbBTerm* db_pin);
