@@ -239,6 +239,22 @@ proc global_route { args } {
   }
 }
 
+sta::define_cmd_args "init_congestion_map" {}
+
+proc init_congestion_map { args } {
+  sta::check_argc_eq0 "init_congestion_map" $args
+
+  if { ![ord::db_has_tech] } {
+    utl::error GRT 56 "Missing dbTech."
+  }
+
+  if { [ord::get_db_block] == "NULL" } {
+    utl::error GRT 57 "Missing dbBlock."
+  }
+
+  grt::init_congestion_map
+}
+
 sta::define_cmd_args "repair_antennas" { diode_cell \
                                          [-iterations iterations] \
                                          [-ratio_margin ratio_margin]}
@@ -466,7 +482,7 @@ proc report_wire_length { args } {
 namespace eval grt {
 proc check_routing_layer { layer } {
   if { ![ord::db_has_tech] } {
-    utl::error GRT 59 "Missing technology file."
+    utl::error GRT 68 "Missing technology file."
   }
   sta::check_positive_integer "layer" $layer
 

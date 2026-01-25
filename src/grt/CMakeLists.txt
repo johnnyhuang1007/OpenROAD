@@ -22,6 +22,7 @@ add_library(grt_lib
   src/Pin.cpp
   src/RepairAntennas.cpp
   src/Rudy.cpp
+  src/GlobalRouterInitCongestion.cpp
   src/GlobalRouter.cpp
 )
 

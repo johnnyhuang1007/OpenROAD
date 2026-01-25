@@ -183,6 +183,8 @@ class GlobalRouter
   void globalRoute(bool save_guides = false,
                    bool start_incremental = false,
                    bool end_incremental = false);
+  // Initialize grid/capacity/blockage without routing.
+  void initCongestionMap();
   void saveCongestion();
   NetRouteMap& getRoutes();
   NetRouteMap getPartialRoutes();

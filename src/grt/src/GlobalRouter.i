@@ -158,6 +158,12 @@ global_route(bool start_incremental, bool end_incremental)
   getGlobalRouter()->globalRoute(true, start_incremental, end_incremental);
 }
 
+void
+init_congestion_map()
+{
+  getGlobalRouter()->initCongestionMap();
+}
+
 std::vector<int>
 route_layer_lengths(odb::dbNet* db_net)
 {
