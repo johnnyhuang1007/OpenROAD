@@ -22,15 +22,10 @@
 #include "rsz/Resizer.hh"
 #include "sta/Clock.hh"
 #include "sta/Corner.hh"
-<<<<<<< Updated upstream
-=======
 #include "sta/FuncExpr.hh"
 #include "sta/InternalPower.hh"
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 #include "sta/Liberty.hh"
+#include "sta/LeakagePower.hh"
 #include "sta/MinMax.hh"
 #include "sta/PowerClass.hh"
 #include "sta/Search.hh"
@@ -893,8 +888,6 @@ float Timing::getPinActivityDensity(odb::dbITerm* db_pin)
   return sta->activity(sta_pin).density();
 }
 
-<<<<<<< Updated upstream
-=======
 float Timing::getPinActivityDensity(odb::dbBTerm* db_pin)
 {
   if (db_pin == nullptr) {
@@ -984,10 +977,6 @@ std::vector<float> Timing::getPinActivityDuties(
   return duties;
 }
 
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 float Timing::getVoltage()
 {
   sta::dbSta* sta = getSta();
@@ -1318,11 +1307,6 @@ float Timing::dynamicPower(odb::dbInst* inst, sta::Corner* corner)
   return (power.internal() + power.switching());
 }
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> Stashed changes
 float Timing::internalPower(odb::dbInst* inst, sta::Corner* corner)
 {
   sta::dbSta* sta = getSta();
@@ -1487,10 +1471,6 @@ Timing::getMasterInternalPowerTables(odb::dbMaster* master)
   return tables;
 }
 
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 void Timing::makeEquivCells()
 {
   rsz::Resizer* resizer = design_->getResizer();

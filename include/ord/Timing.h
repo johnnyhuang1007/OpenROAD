@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <string>
 #include <vector>
 
 #include "sta/Clock.hh"
@@ -78,8 +79,6 @@ struct TimingCheckTableModel
   float findCheckValue(float axis0_value, float axis1_value) const;
 };
 
-<<<<<<< Updated upstream
-=======
 struct LeakagePowerState
 {
   std::string when;
@@ -105,10 +104,6 @@ struct InternalPowerTableModel
   std::vector<std::vector<float>> fall_power_table;
 };
 
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 class Timing
 {
  public:
@@ -166,15 +161,9 @@ class Timing
   float internalPower(odb::dbInst* inst, sta::Corner* corner);
   float switchingPower(odb::dbInst* inst, sta::Corner* corner);
   float dynamicPower(odb::dbInst* inst, sta::Corner* corner);
-<<<<<<< Updated upstream
-=======
   std::vector<LeakagePowerState> getMasterLeakageStates(odb::dbMaster* master);
   std::vector<InternalPowerTableModel> getMasterInternalPowerTables(
       odb::dbMaster* master);
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
   std::vector<odb::dbMTerm*> getTimingFanoutFrom(odb::dbMTerm* input);
   std::vector<sta::Corner*> getCorners();
@@ -190,17 +179,11 @@ class Timing
   std::vector<TimingCheckTableModel> getLibertyCellCheckTableModels(odb::dbMaster* master);
   float gateScaleFactor(odb::dbInst* inst); //gate delay or slew = scale * table value
   float getPinActivityDensity(odb::dbITerm* db_pin);
-<<<<<<< Updated upstream
-=======
   float getPinActivityDensity(odb::dbBTerm* db_pin);
   std::vector<float> getPinActivityDensities(const std::vector<odb::dbITerm*>& db_pins);
   float getPinActivityDuty(odb::dbITerm* db_pin);
   float getPinActivityDuty(odb::dbBTerm* db_pin);
   std::vector<float> getPinActivityDuties(const std::vector<odb::dbITerm*>& db_pins);
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
   float getVoltage();
   // Enable common STA debug categories at a reasonable verbosity.
   // This only toggles STA-side debugPrint categories.
