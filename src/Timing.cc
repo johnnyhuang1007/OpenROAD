@@ -22,6 +22,11 @@
 #include "rsz/Resizer.hh"
 #include "sta/Clock.hh"
 #include "sta/Corner.hh"
+<<<<<<< Updated upstream
+=======
+#include "sta/FuncExpr.hh"
+#include "sta/InternalPower.hh"
+>>>>>>> Stashed changes
 #include "sta/Liberty.hh"
 #include "sta/MinMax.hh"
 #include "sta/PowerClass.hh"
@@ -68,7 +73,8 @@ std::vector<float> axisValues(const sta::TableModel* model, int axis_index)
   return values;
 }
 
-std::vector<std::vector<float>> tableValues(const sta::TableModel* model)
+std::vector<std::vector<float>> tableValues(const sta::TableModel* model,
+                                            float scale = 1.0f)
 {
   std::vector<std::vector<float>> values;
   if (model == nullptr) {
@@ -88,10 +94,28 @@ std::vector<std::vector<float>> tableValues(const sta::TableModel* model)
   values.assign(rows, std::vector<float>(cols, 0.0f));
   for (size_t row = 0; row < rows; ++row) {
     for (size_t col = 0; col < cols; ++col) {
-      values[row][col] = model->value(row, col, 0);
+      values[row][col] = model->value(row, col, 0) * scale;
     }
   }
   return values;
+}
+
+// Warm power/activity infrastructure once using the first valid pin.
+// This avoids repeating Sta::activity() preamble on every pin lookup.
+void warmPowerActivityOnce(sta::dbSta* sta,
+                           sta::dbNetwork* network,
+                           const std::vector<odb::dbITerm*>& db_pins)
+{
+  for (auto* db_pin : db_pins) {
+    if (db_pin == nullptr) {
+      continue;
+    }
+    sta::Pin* sta_pin = network->dbToSta(db_pin);
+    if (sta_pin != nullptr) {
+      (void) sta->activity(sta_pin);
+      return;
+    }
+  }
 }
 
 struct AxisInterpolation
@@ -659,29 +683,15 @@ std::vector<float> Timing::getPinArrivals(const std::vector<odb::dbITerm*>& db_p
 
 float Timing::getPinArrival(sta::Pin* sta_pin, RiseFall rf, MinMax minmax)
 {
-  auto vertex_array = vertices(sta_pin);
-  float delay = (minmax == Max) ? -sta::INF : sta::INF;
-  float d1, d2;
-  sta::Clock* default_arrival_clock = getSta()->sdc()->defaultArrivalClock();
-  for (auto vertex : vertex_array) {
-    if (vertex == nullptr) {
-      continue;
-    }
-    const sta::RiseFall* clk_r = sta::RiseFall::rise();
-    const sta::RiseFall* clk_f = sta::RiseFall::fall();
-    const sta::RiseFall* arrive_hold = (rf == Rise) ? clk_r : clk_f;
-    d1 = getPinArrivalTime(nullptr, clk_r, vertex, arrive_hold);
-    d2 = getPinArrivalTime(default_arrival_clock, clk_r, vertex, arrive_hold);
-    delay = (minmax == Max) ? std::max({d1, d2, delay})
-                            : std::min({d1, d2, delay});
-    for (auto clk : findClocksMatching("*", false, false)) {
-      d1 = getPinArrivalTime(clk, clk_r, vertex, arrive_hold);
-      d2 = getPinArrivalTime(clk, clk_f, vertex, arrive_hold);
-      delay = (minmax == Max) ? std::max({d1, d2, delay})
-                              : std::min({d1, d2, delay});
-    }
+  if (sta_pin == nullptr) {
+    return 0.0f;
   }
-  return delay;
+
+  sta::dbSta* sta = getSta();
+  const sta::RiseFall* sta_rf
+      = (rf == Rise) ? sta::RiseFall::rise() : sta::RiseFall::fall();
+  const sta::MinMax* sta_mm = getMinMax(minmax);
+  return sta::delayAsFloat(sta->pinArrival(sta_pin, sta_rf, sta_mm));
 }
 
 std::vector<sta::Corner*> Timing::getCorners()
@@ -880,6 +890,98 @@ float Timing::getPinActivityDensity(odb::dbITerm* db_pin)
   return sta->activity(sta_pin).density();
 }
 
+<<<<<<< Updated upstream
+=======
+float Timing::getPinActivityDensity(odb::dbBTerm* db_pin)
+{
+  if (db_pin == nullptr) {
+    return 0.0f;
+  }
+
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta::Pin* sta_pin = network->dbToSta(db_pin);
+  if (sta_pin == nullptr) {
+    return 0.0f;
+  }
+
+  return sta->activity(sta_pin).density();
+}
+
+float Timing::getPinActivityDuty(odb::dbITerm* db_pin)
+{
+  if (db_pin == nullptr) {
+    return 0.0f;
+  }
+
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta::Pin* sta_pin = network->dbToSta(db_pin);
+  if (sta_pin == nullptr) {
+    return 0.0f;
+  }
+
+  return sta->activity(sta_pin).duty();
+}
+
+float Timing::getPinActivityDuty(odb::dbBTerm* db_pin)
+{
+  if (db_pin == nullptr) {
+    return 0.0f;
+  }
+
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta::Pin* sta_pin = network->dbToSta(db_pin);
+  if (sta_pin == nullptr) {
+    return 0.0f;
+  }
+
+  return sta->activity(sta_pin).duty();
+}
+
+std::vector<float> Timing::getPinActivityDensities(
+    const std::vector<odb::dbITerm*>& db_pins)
+{
+  std::vector<float> densities;
+  densities.reserve(db_pins.size());
+
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  warmPowerActivityOnce(sta, network, db_pins);
+  for (auto* db_pin : db_pins) {
+    if (db_pin == nullptr) {
+      densities.push_back(0.0f);
+      continue;
+    }
+    sta::Pin* sta_pin = network->dbToSta(db_pin);
+    densities.push_back(sta_pin != nullptr ? sta->activityNoPreamble(sta_pin).density()
+                                           : 0.0f);
+  }
+  return densities;
+}
+
+std::vector<float> Timing::getPinActivityDuties(
+    const std::vector<odb::dbITerm*>& db_pins)
+{
+  std::vector<float> duties;
+  duties.reserve(db_pins.size());
+
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  warmPowerActivityOnce(sta, network, db_pins);
+  for (auto* db_pin : db_pins) {
+    if (db_pin == nullptr) {
+      duties.push_back(0.0f);
+      continue;
+    }
+    sta::Pin* sta_pin = network->dbToSta(db_pin);
+    duties.push_back(sta_pin != nullptr ? sta->activityNoPreamble(sta_pin).duty() : 0.0f);
+  }
+  return duties;
+}
+
+>>>>>>> Stashed changes
 float Timing::getVoltage()
 {
   sta::dbSta* sta = getSta();
@@ -1210,6 +1312,173 @@ float Timing::dynamicPower(odb::dbInst* inst, sta::Corner* corner)
   return (power.internal() + power.switching());
 }
 
+<<<<<<< Updated upstream
+=======
+float Timing::internalPower(odb::dbInst* inst, sta::Corner* corner)
+{
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+
+  sta::Instance* sta_inst = network->dbToSta(inst);
+  if (!sta_inst) {
+    return 0.0;
+  }
+  sta::PowerResult power = sta->power(sta_inst, corner);
+  return power.internal();
+}
+
+float Timing::switchingPower(odb::dbInst* inst, sta::Corner* corner)
+{
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+
+  sta::Instance* sta_inst = network->dbToSta(inst);
+  if (!sta_inst) {
+    return 0.0;
+  }
+  sta::PowerResult power = sta->power(sta_inst, corner);
+  return power.switching();
+}
+
+std::vector<LeakagePowerState> Timing::getMasterLeakageStates(odb::dbMaster* master)
+{
+  std::vector<LeakagePowerState> states;
+  if (master == nullptr) {
+    return states;
+  }
+
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta::Cell* sta_cell = network->dbToSta(master);
+  if (sta_cell == nullptr) {
+    return states;
+  }
+
+  sta::LibertyCell* cell = network->libertyCell(sta_cell);
+  if (cell == nullptr) {
+    return states;
+  }
+
+  sta::Corner* corner = nullptr;
+  const auto corners = getCorners();
+  if (!corners.empty()) {
+    corner = corners.front();
+  }
+  if (corner == nullptr) {
+    return states;
+  }
+
+  sta::LibertyCell* corner_cell = cell->cornerCell(corner, sta::MinMax::max());
+  if (corner_cell == nullptr) {
+    return states;
+  }
+
+  for (sta::LeakagePower* leak : *corner_cell->leakagePowers()) {
+    if (leak == nullptr) {
+      continue;
+    }
+    LeakagePowerState state;
+    sta::FuncExpr* when = leak->when();
+    state.when_exists = when != nullptr;
+    state.when = state.when_exists ? when->to_string() : "";
+    state.leakage = leak->power();
+    state.is_cell_leakage = false;
+    states.push_back(state);
+  }
+
+  float cell_leakage = 0.0f;
+  bool cell_leakage_exists = false;
+  cell->leakagePower(cell_leakage, cell_leakage_exists);
+  if (cell_leakage_exists) {
+    states.push_back(LeakagePowerState{"", cell_leakage, false, true});
+  }
+  return states;
+}
+
+std::vector<InternalPowerTableModel>
+Timing::getMasterInternalPowerTables(odb::dbMaster* master)
+{
+  std::vector<InternalPowerTableModel> tables;
+  if (master == nullptr) {
+    return tables;
+  }
+
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta::Cell* sta_cell = network->dbToSta(master);
+  if (sta_cell == nullptr) {
+    return tables;
+  }
+
+  sta::LibertyCell* cell = network->libertyCell(sta_cell);
+  if (cell == nullptr) {
+    return tables;
+  }
+
+  sta::Corner* corner = nullptr;
+  const auto corners = getCorners();
+  if (!corners.empty()) {
+    corner = corners.front();
+  }
+  if (corner == nullptr) {
+    return tables;
+  }
+
+  sta::LibertyCell* corner_cell = cell->cornerCell(corner, sta::MinMax::max());
+  if (corner_cell == nullptr) {
+    return tables;
+  }
+  const sta::DcalcAnalysisPt* dcalc_ap = corner->findDcalcAnalysisPt(sta::MinMax::max());
+  const sta::Pvt* pvt = dcalc_ap ? dcalc_ap->operatingConditions() : nullptr;
+
+  for (sta::InternalPower* pwr : corner_cell->internalPowers()) {
+    if (pwr == nullptr) {
+      continue;
+    }
+
+    InternalPowerTableModel entry;
+    const sta::LibertyPort* to_port = pwr->port();
+    const sta::LibertyPort* from_port = pwr->relatedPort();
+    entry.pin_name = to_port ? to_port->name() : "";
+    entry.related_pin_name = from_port ? from_port->name() : "";
+    const char* related_pg_pin = pwr->relatedPgPin();
+    entry.related_pg_pin = related_pg_pin ? related_pg_pin : "";
+
+    sta::FuncExpr* when = pwr->when();
+    entry.when_exists = (when != nullptr);
+    entry.when = entry.when_exists ? when->to_string() : "";
+
+    entry.rise_has_table = false;
+    if (auto* rise_model = pwr->model(sta::RiseFall::rise())) {
+      const sta::TableModel* table_model = rise_model->tableModel();
+      if (table_model != nullptr) {
+        entry.rise_has_table = true;
+        const float scale = table_model->scaleFactor(corner_cell, pvt);
+        entry.rise_table_axis0 = axisValues(table_model, 0);
+        entry.rise_table_axis1 = axisValues(table_model, 1);
+        entry.rise_power_table = tableValues(table_model, scale);
+      }
+    }
+
+    entry.fall_has_table = false;
+    if (auto* fall_model = pwr->model(sta::RiseFall::fall())) {
+      const sta::TableModel* table_model = fall_model->tableModel();
+      if (table_model != nullptr) {
+        entry.fall_has_table = true;
+        const float scale = table_model->scaleFactor(corner_cell, pvt);
+        entry.fall_table_axis0 = axisValues(table_model, 0);
+        entry.fall_table_axis1 = axisValues(table_model, 1);
+        entry.fall_power_table = tableValues(table_model, scale);
+      }
+    }
+
+    tables.push_back(std::move(entry));
+  }
+
+  return tables;
+}
+
+>>>>>>> Stashed changes
 void Timing::makeEquivCells()
 {
   rsz::Resizer* resizer = design_->getResizer();

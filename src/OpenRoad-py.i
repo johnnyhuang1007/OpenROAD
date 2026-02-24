@@ -61,6 +61,11 @@ get_db_block();
 %template(FloatVectorVector) std::vector<std::vector<float>>;
 %template(TimingArcTableModels) std::vector<ord::TimingArcTableModel>;
 %template(TimingCheckTableModels) std::vector<ord::TimingCheckTableModel>;
+<<<<<<< Updated upstream
+=======
+%template(LeakagePowerStates) std::vector<ord::LeakagePowerState>;
+%template(InternalPowerTableModels) std::vector<ord::InternalPowerTableModel>;
+>>>>>>> Stashed changes
 
 #ifdef BAZEL
 %include "src/gpl/src/replace-py.i"
