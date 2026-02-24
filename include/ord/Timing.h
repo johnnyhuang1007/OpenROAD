@@ -105,6 +105,9 @@ struct InternalPowerTableModel
   std::vector<std::vector<float>> fall_power_table;
 };
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 class Timing
 {
@@ -168,6 +171,9 @@ class Timing
   std::vector<LeakagePowerState> getMasterLeakageStates(odb::dbMaster* master);
   std::vector<InternalPowerTableModel> getMasterInternalPowerTables(
       odb::dbMaster* master);
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
   std::vector<odb::dbMTerm*> getTimingFanoutFrom(odb::dbMTerm* input);
@@ -191,6 +197,9 @@ class Timing
   float getPinActivityDuty(odb::dbITerm* db_pin);
   float getPinActivityDuty(odb::dbBTerm* db_pin);
   std::vector<float> getPinActivityDuties(const std::vector<odb::dbITerm*>& db_pins);
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   float getVoltage();
   // Enable common STA debug categories at a reasonable verbosity.

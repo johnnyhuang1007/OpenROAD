@@ -65,6 +65,9 @@ get_db_block();
 =======
 %template(LeakagePowerStates) std::vector<ord::LeakagePowerState>;
 %template(InternalPowerTableModels) std::vector<ord::InternalPowerTableModel>;
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 #ifdef BAZEL

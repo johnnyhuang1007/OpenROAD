@@ -26,6 +26,9 @@
 =======
 #include "sta/FuncExpr.hh"
 #include "sta/InternalPower.hh"
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 #include "sta/Liberty.hh"
 #include "sta/MinMax.hh"
@@ -981,6 +984,9 @@ std::vector<float> Timing::getPinActivityDuties(
   return duties;
 }
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 float Timing::getVoltage()
 {
@@ -1313,7 +1319,10 @@ float Timing::dynamicPower(odb::dbInst* inst, sta::Corner* corner)
 }
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
 float Timing::internalPower(odb::dbInst* inst, sta::Corner* corner)
 {
   sta::dbSta* sta = getSta();
@@ -1478,6 +1487,9 @@ Timing::getMasterInternalPowerTables(odb::dbMaster* master)
   return tables;
 }
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 void Timing::makeEquivCells()
 {
