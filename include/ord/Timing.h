@@ -104,6 +104,40 @@ struct InternalPowerTableModel
   std::vector<std::vector<float>> fall_power_table;
 };
 
+struct LogicalConstNetValue
+{
+  std::string net_name;
+  int value;
+};
+
+struct DisabledTimingArc
+{
+  std::string inst_name;
+  std::string from_pin_name;
+  std::string to_pin_name;
+};
+
+struct DisabledTimingArcDetail
+{
+  std::string inst_name;
+  std::string from_pin_name;
+  std::string to_pin_name;
+  std::string role_name;
+  std::string edge_sense;
+  std::string sim_sense;
+  std::string arc_sense;
+  std::string from_transition;
+  std::string to_transition;
+  std::string when;
+  int arc_index;
+  int search_thru;
+  int disabled_constant;
+  int disabled_cond;
+  int disabled_constraint;
+  int disabled_loop;
+  int disabled_preset_clear;
+};
+
 class Timing
 {
  public:
@@ -184,6 +218,9 @@ class Timing
   float getPinActivityDuty(odb::dbITerm* db_pin);
   float getPinActivityDuty(odb::dbBTerm* db_pin);
   std::vector<float> getPinActivityDuties(const std::vector<odb::dbITerm*>& db_pins);
+  std::vector<LogicalConstNetValue> getLogicConstantNetValues();
+  std::vector<DisabledTimingArc> getDisabledTimingArcs();
+  std::vector<DisabledTimingArcDetail> getDisabledTimingArcDetails();
   float getVoltage();
   // Enable common STA debug categories at a reasonable verbosity.
   // This only toggles STA-side debugPrint categories.

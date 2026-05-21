@@ -27,8 +27,10 @@
 #include "sta/Liberty.hh"
 #include "sta/LeakagePower.hh"
 #include "sta/MinMax.hh"
+#include "sta/Network.hh"
 #include "sta/PowerClass.hh"
 #include "sta/Search.hh"
+#include "sta/SearchPred.hh"
 #include "sta/TimingArc.hh"
 #include "sta/TimingRole.hh"
 #include "sta/TableModel.hh"
@@ -441,6 +443,177 @@ float TimingCheckTableModel::findCheckValue(float axis0_value,
 
 Timing::Timing(Design* design) : design_(design)
 {
+}
+
+std::vector<LogicalConstNetValue> Timing::getLogicConstantNetValues()
+{
+  std::vector<LogicalConstNetValue> values;
+  odb::dbBlock* block = design_->getBlock();
+  if (block == nullptr) {
+    return values;
+  }
+
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta->findLogicConstants();
+
+  for (odb::dbNet* net : block->getNets()) {
+    odb::dbITerm* driver = nullptr;
+    for (odb::dbITerm* iterm : net->getITerms()) {
+      if (iterm != nullptr && iterm->isOutputSignal()) {
+        driver = iterm;
+        break;
+      }
+    }
+    if (driver == nullptr) {
+      continue;
+    }
+
+    sta::Pin* pin = network->dbToSta(driver);
+    if (pin == nullptr) {
+      continue;
+    }
+
+    const sta::LogicValue value = sta->simLogicValue(pin);
+    if (value == sta::LogicValue::zero || value == sta::LogicValue::one) {
+      values.push_back(
+          {net->getName(), value == sta::LogicValue::one ? 1 : 0});
+    }
+  }
+  return values;
+}
+
+std::vector<DisabledTimingArc> Timing::getDisabledTimingArcs()
+{
+  std::vector<DisabledTimingArc> arcs;
+  sta::dbSta* sta = getSta();
+  sta->findLogicConstants();
+
+  sta::Graph* graph = sta->graph();
+  sta::Network* network = sta->cmdNetwork();
+  if (graph == nullptr || network == nullptr) {
+    return arcs;
+  }
+
+  for (sta::Edge* edge : sta->disabledEdges()) {
+    if (edge == nullptr || edge->role()->isWire()) {
+      continue;
+    }
+    sta::Vertex* from_vertex = edge->from(graph);
+    sta::Vertex* to_vertex = edge->to(graph);
+    if (from_vertex == nullptr || to_vertex == nullptr) {
+      continue;
+    }
+    sta::Pin* from_pin = from_vertex->pin();
+    sta::Pin* to_pin = to_vertex->pin();
+    if (from_pin == nullptr || to_pin == nullptr) {
+      continue;
+    }
+
+    sta::Instance* inst = network->instance(from_pin);
+    sta::Port* from_port = network->port(from_pin);
+    sta::Port* to_port = network->port(to_pin);
+    if (inst == nullptr || from_port == nullptr || to_port == nullptr) {
+      continue;
+    }
+
+    const char* inst_name = network->pathName(inst);
+    const char* from_pin_name = network->name(from_port);
+    const char* to_pin_name = network->name(to_port);
+    if (inst_name == nullptr || from_pin_name == nullptr
+        || to_pin_name == nullptr) {
+      continue;
+    }
+
+    arcs.push_back({inst_name, from_pin_name, to_pin_name});
+  }
+  return arcs;
+}
+
+std::vector<DisabledTimingArcDetail> Timing::getDisabledTimingArcDetails()
+{
+  std::vector<DisabledTimingArcDetail> details;
+  sta::dbSta* sta = getSta();
+  sta->findLogicConstants();
+
+  sta::Graph* graph = sta->graph();
+  sta::Network* network = sta->cmdNetwork();
+  if (graph == nullptr || network == nullptr) {
+    return details;
+  }
+
+  for (sta::Edge* edge : sta->disabledEdges()) {
+    if (edge == nullptr || edge->role()->isWire()) {
+      continue;
+    }
+    sta::Vertex* from_vertex = edge->from(graph);
+    sta::Vertex* to_vertex = edge->to(graph);
+    if (from_vertex == nullptr || to_vertex == nullptr) {
+      continue;
+    }
+    sta::Pin* from_pin = from_vertex->pin();
+    sta::Pin* to_pin = to_vertex->pin();
+    if (from_pin == nullptr || to_pin == nullptr) {
+      continue;
+    }
+
+    sta::Instance* inst = network->instance(from_pin);
+    sta::Port* from_port = network->port(from_pin);
+    sta::Port* to_port = network->port(to_pin);
+    if (inst == nullptr || from_port == nullptr || to_port == nullptr) {
+      continue;
+    }
+
+    const char* inst_name = network->pathName(inst);
+    const char* from_pin_name = network->name(from_port);
+    const char* to_pin_name = network->name(to_port);
+    if (inst_name == nullptr || from_pin_name == nullptr
+        || to_pin_name == nullptr) {
+      continue;
+    }
+
+    sta::TimingArcSet* arc_set = edge->timingArcSet();
+    if (arc_set == nullptr) {
+      continue;
+    }
+    std::string when;
+    if (sta::FuncExpr* cond = arc_set->cond()) {
+      when = cond->to_string();
+    }
+
+    for (const sta::TimingArc* arc : arc_set->arcs()) {
+      if (arc == nullptr) {
+        continue;
+      }
+      const sta::Transition* from_transition = arc->fromEdge();
+      const sta::Transition* to_transition = arc->toEdge();
+      const sta::RiseFall* from_rf
+          = from_transition ? from_transition->asRiseFall() : nullptr;
+      const sta::RiseFall* to_rf
+          = to_transition ? to_transition->asRiseFall() : nullptr;
+
+      DisabledTimingArcDetail detail;
+      detail.inst_name = inst_name;
+      detail.from_pin_name = from_pin_name;
+      detail.to_pin_name = to_pin_name;
+      detail.role_name = edge->role() ? edge->role()->to_string() : "";
+      detail.edge_sense = sta::to_string(edge->sense());
+      detail.sim_sense = sta::to_string(edge->simTimingSense());
+      detail.arc_sense = sta::to_string(arc->sense());
+      detail.from_transition = from_rf ? from_rf->name() : "";
+      detail.to_transition = to_rf ? to_rf->name() : "";
+      detail.when = when;
+      detail.arc_index = static_cast<int>(arc->index());
+      detail.search_thru = sta::searchThru(edge, arc, graph) ? 1 : 0;
+      detail.disabled_constant = sta->isDisabledConstant(edge) ? 1 : 0;
+      detail.disabled_cond = edge->isDisabledCond() ? 1 : 0;
+      detail.disabled_constraint = edge->isDisabledConstraint() ? 1 : 0;
+      detail.disabled_loop = edge->isDisabledLoop() ? 1 : 0;
+      detail.disabled_preset_clear = sta->isDisabledPresetClr(edge) ? 1 : 0;
+      details.push_back(detail);
+    }
+  }
+  return details;
 }
 
 sta::dbSta* Timing::getSta()
