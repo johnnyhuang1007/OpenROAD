@@ -87,6 +87,13 @@ struct LeakagePowerState
   bool is_cell_leakage;
 };
 
+struct InstLeakStateDuty
+{
+  std::string when;
+  bool when_exists;
+  float duty;
+};
+
 struct InternalPowerTableModel
 {
   std::string pin_name;
@@ -102,6 +109,15 @@ struct InternalPowerTableModel
   std::vector<float> fall_table_axis0;
   std::vector<float> fall_table_axis1;
   std::vector<std::vector<float>> fall_power_table;
+};
+
+struct InstInternalPowerState
+{
+  std::string when;
+  bool when_exists;
+  float duty;          // when/diff duty, as used by the STA power engine
+  float from_density;  // related-pin toggle density (0 if no related pin)
+  float to_density;    // row pin toggle density
 };
 
 struct LogicalConstNetValue
@@ -196,8 +212,12 @@ class Timing
   float switchingPower(odb::dbInst* inst, sta::Corner* corner);
   float dynamicPower(odb::dbInst* inst, sta::Corner* corner);
   std::vector<LeakagePowerState> getMasterLeakageStates(odb::dbMaster* master);
+  std::vector<InstLeakStateDuty> getInstLeakStateDuties(odb::dbInst* inst);
   std::vector<InternalPowerTableModel> getMasterInternalPowerTables(
       odb::dbMaster* master);
+  // Rows align 1:1 with getMasterInternalPowerTables of inst's master.
+  std::vector<InstInternalPowerState> getInstInternalPowerStates(
+      odb::dbInst* inst);
 
   std::vector<odb::dbMTerm*> getTimingFanoutFrom(odb::dbMTerm* input);
   std::vector<sta::Corner*> getCorners();

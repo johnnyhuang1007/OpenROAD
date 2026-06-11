@@ -1561,6 +1561,53 @@ std::vector<LeakagePowerState> Timing::getMasterLeakageStates(odb::dbMaster* mas
   return states;
 }
 
+std::vector<InstLeakStateDuty> Timing::getInstLeakStateDuties(odb::dbInst* inst)
+{
+  std::vector<InstLeakStateDuty> states;
+  if (inst == nullptr) {
+    return states;
+  }
+
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta::Instance* sta_inst = network->dbToSta(inst);
+  if (sta_inst == nullptr) {
+    return states;
+  }
+
+  sta::LibertyCell* cell = network->libertyCell(sta_inst);
+  if (cell == nullptr) {
+    return states;
+  }
+
+  sta::Corner* corner = nullptr;
+  const auto corners = getCorners();
+  if (!corners.empty()) {
+    corner = corners.front();
+  }
+  if (corner == nullptr) {
+    return states;
+  }
+
+  sta::LibertyCell* corner_cell = cell->cornerCell(corner, sta::MinMax::max());
+  if (corner_cell == nullptr) {
+    return states;
+  }
+
+  for (sta::LeakagePower* leak : *corner_cell->leakagePowers()) {
+    if (leak == nullptr) {
+      continue;
+    }
+    sta::FuncExpr* when = leak->when();
+    states.push_back(InstLeakStateDuty{
+        when != nullptr ? when->to_string() : "",
+        when != nullptr,
+        sta->leakageStateDuty(sta_inst, leak),
+    });
+  }
+  return states;
+}
+
 std::vector<InternalPowerTableModel>
 Timing::getMasterInternalPowerTables(odb::dbMaster* master)
 {
@@ -1642,6 +1689,41 @@ Timing::getMasterInternalPowerTables(odb::dbMaster* master)
   }
 
   return tables;
+}
+
+std::vector<InstInternalPowerState>
+Timing::getInstInternalPowerStates(odb::dbInst* inst)
+{
+  std::vector<InstInternalPowerState> states;
+  if (inst == nullptr) {
+    return states;
+  }
+
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta::Instance* sta_inst = network->dbToSta(inst);
+  if (sta_inst == nullptr) {
+    return states;
+  }
+
+  sta::Corner* corner = nullptr;
+  const auto corners = getCorners();
+  if (!corners.empty()) {
+    corner = corners.front();
+  }
+  if (corner == nullptr) {
+    return states;
+  }
+
+  for (const sta::PwrInternalRowState& row :
+       sta->internalPowerRowStates(sta_inst, corner)) {
+    states.push_back(InstInternalPowerState{row.when,
+                                            row.when_exists,
+                                            row.duty,
+                                            row.from_density,
+                                            row.to_density});
+  }
+  return states;
 }
 
 void Timing::makeEquivCells()
