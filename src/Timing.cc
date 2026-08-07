@@ -10,6 +10,7 @@
 #include <limits>
 #include <cstring>
 #include <set>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -21,6 +22,7 @@
 #include "ord/Tech.h"
 #include "rsz/Resizer.hh"
 #include "sta/Clock.hh"
+#include "sta/ClockLatency.hh"
 #include "sta/Corner.hh"
 #include "sta/FuncExpr.hh"
 #include "sta/InternalPower.hh"
@@ -29,6 +31,8 @@
 #include "sta/MinMax.hh"
 #include "sta/Network.hh"
 #include "sta/PowerClass.hh"
+#include "sta/PortDelay.hh"
+#include "sta/RiseFallMinMax.hh"
 #include "sta/Search.hh"
 #include "sta/SearchPred.hh"
 #include "sta/TimingArc.hh"
@@ -41,6 +45,33 @@
 #include "utl/Logger.h"
 
 namespace {
+
+void aggregateRiseFallMinMax(const sta::RiseFallMinMax* values,
+                             float& min_value,
+                             bool& min_exists,
+                             float& max_value,
+                             bool& max_exists)
+{
+  min_value = std::numeric_limits<float>::quiet_NaN();
+  max_value = std::numeric_limits<float>::quiet_NaN();
+  min_exists = false;
+  max_exists = false;
+
+  for (const sta::RiseFall* rf : sta::RiseFall::range()) {
+    float value;
+    bool exists;
+    values->value(rf, sta::MinMax::min(), value, exists);
+    if (exists) {
+      min_value = min_exists ? std::min(min_value, value) : value;
+      min_exists = true;
+    }
+    values->value(rf, sta::MinMax::max(), value, exists);
+    if (exists) {
+      max_value = max_exists ? std::max(max_value, value) : value;
+      max_exists = true;
+    }
+  }
+}
 
 std::vector<float> axisValues(const sta::TableModel* model, int axis_index)
 {
@@ -624,11 +655,155 @@ sta::dbSta* Timing::getSta()
 std::pair<odb::dbITerm*, odb::dbBTerm*> Timing::staToDBPin(const sta::Pin* pin)
 {
   sta::dbNetwork* db_network = getSta()->getDbNetwork();
-  odb::dbITerm* iterm;
-  odb::dbBTerm* bterm;
-  odb::dbModITerm* moditerm;
+  odb::dbITerm* iterm = nullptr;
+  odb::dbBTerm* bterm = nullptr;
+  odb::dbModITerm* moditerm = nullptr;
   db_network->staToDb(pin, iterm, bterm, moditerm);
   return std::make_pair(iterm, bterm);
+}
+
+std::string Timing::staPinName(const sta::Pin* pin)
+{
+  if (pin == nullptr) {
+    return "";
+  }
+  const auto [iterm, bterm] = staToDBPin(pin);
+  if (iterm != nullptr) {
+    return iterm->getName();
+  }
+  if (bterm != nullptr) {
+    return bterm->getName();
+  }
+  const char* path_name = getSta()->getDbNetwork()->pathName(pin);
+  return path_name == nullptr ? "" : path_name;
+}
+
+std::vector<std::string> Timing::getClockNetNames()
+{
+  std::vector<std::string> names;
+  for (odb::dbNet* net : getSta()->findClkNets()) {
+    names.push_back(net->getName());
+  }
+  std::sort(names.begin(), names.end());
+  return names;
+}
+
+std::vector<ClockConstraint> Timing::getClockConstraints()
+{
+  std::vector<ClockConstraint> constraints;
+  getSta()->updateGeneratedClks();
+  sta::ClockSeq clocks;
+  getSta()->sdc()->sortedClocks(clocks);
+
+  for (sta::Clock* clock : clocks) {
+    float setup_uncertainty;
+    bool setup_uncertainty_exists;
+    clock->uncertainty(sta::SetupHold::max(),
+                       setup_uncertainty,
+                       setup_uncertainty_exists);
+    float hold_uncertainty;
+    bool hold_uncertainty_exists;
+    clock->uncertainty(sta::SetupHold::min(),
+                       hold_uncertainty,
+                       hold_uncertainty_exists);
+
+    std::vector<std::string> pin_names;
+    for (const sta::Pin* pin : clock->pins()) {
+      pin_names.push_back(staPinName(pin));
+    }
+    std::sort(pin_names.begin(), pin_names.end());
+    if (pin_names.empty()) {
+      pin_names.emplace_back();
+    }
+
+    for (const std::string& pin_name : pin_names) {
+      constraints.push_back({clock->name(),
+                             pin_name,
+                             clock->period(),
+                             setup_uncertainty_exists
+                                 ? setup_uncertainty
+                                 : std::numeric_limits<float>::quiet_NaN(),
+                             hold_uncertainty_exists
+                                 ? hold_uncertainty
+                                 : std::numeric_limits<float>::quiet_NaN(),
+                             setup_uncertainty_exists,
+                             hold_uncertainty_exists});
+    }
+  }
+  return constraints;
+}
+
+std::vector<PortDelayConstraint> Timing::getPortDelayConstraints()
+{
+  std::vector<PortDelayConstraint> constraints;
+  const auto append = [this, &constraints](sta::PortDelay* delay,
+                                            bool is_input) {
+    const sta::ClockEdge* clock_edge = delay->clkEdge();
+    sta::Clock* clock = delay->clock();
+    PortDelayConstraint constraint;
+    constraint.clock_name = clock == nullptr ? "" : clock->name();
+    constraint.pin_name = staPinName(delay->pin());
+    constraint.reference_pin_name = staPinName(delay->refPin());
+    aggregateRiseFallMinMax(delay->delays(),
+                           constraint.min_delay,
+                           constraint.min_delay_exists,
+                           constraint.max_delay,
+                           constraint.max_delay_exists);
+    constraint.is_input = is_input;
+    constraint.clock_fall
+        = clock_edge != nullptr
+          && clock_edge->transition() == sta::RiseFall::fall();
+    constraint.source_latency_included = delay->sourceLatencyIncluded();
+    constraint.network_latency_included = delay->networkLatencyIncluded();
+    constraints.push_back(std::move(constraint));
+  };
+
+  sta::Sdc* sdc = getSta()->sdc();
+  for (sta::InputDelay* delay : sdc->inputDelays()) {
+    append(delay, true);
+  }
+  for (sta::OutputDelay* delay : sdc->outputDelays()) {
+    append(delay, false);
+  }
+  std::sort(constraints.begin(),
+            constraints.end(),
+            [](const PortDelayConstraint& lhs,
+               const PortDelayConstraint& rhs) {
+              return std::tie(lhs.is_input,
+                              lhs.pin_name,
+                              lhs.clock_name,
+                              lhs.clock_fall)
+                     < std::tie(rhs.is_input,
+                                rhs.pin_name,
+                                rhs.clock_name,
+                                rhs.clock_fall);
+            });
+  return constraints;
+}
+
+std::vector<ClockLatencyConstraint> Timing::getClockLatencyConstraints()
+{
+  std::vector<ClockLatencyConstraint> constraints;
+  for (sta::ClockLatency* latency : *getSta()->sdc()->clockLatencies()) {
+    ClockLatencyConstraint constraint;
+    constraint.clock_name
+        = latency->clock() == nullptr ? "" : latency->clock()->name();
+    constraint.pin_name = staPinName(latency->pin());
+    aggregateRiseFallMinMax(latency->delays(),
+                           constraint.min_delay,
+                           constraint.min_delay_exists,
+                           constraint.max_delay,
+                           constraint.max_delay_exists);
+    constraints.push_back(std::move(constraint));
+  }
+  std::sort(constraints.begin(),
+            constraints.end(),
+            [](const ClockLatencyConstraint& lhs,
+               const ClockLatencyConstraint& rhs) {
+              return std::tie(lhs.pin_name, lhs.clock_name)
+                     < std::tie(rhs.pin_name, rhs.clock_name);
+            });
+  return constraints;
 }
 
 bool Timing::isEndpoint(odb::dbITerm* db_pin)

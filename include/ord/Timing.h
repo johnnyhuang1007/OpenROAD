@@ -154,6 +154,50 @@ struct DisabledTimingArcDetail
   int disabled_preset_clear;
 };
 
+// Scalar projections of selected resolved SDC constraints for TimingAttr.
+// All time values are OpenSTA internal units (seconds), independent of the
+// command/report time unit.
+struct ClockConstraint
+{
+  std::string clock_name;
+  // One row is returned per clock source pin. Virtual clocks use an empty
+  // pin_name.
+  std::string pin_name;
+  float period;
+  float setup_uncertainty;
+  float hold_uncertainty;
+  bool setup_uncertainty_exists;
+  bool hold_uncertainty_exists;
+};
+
+struct PortDelayConstraint
+{
+  std::string clock_name;
+  std::string pin_name;
+  std::string reference_pin_name;
+  float min_delay;
+  float max_delay;
+  bool min_delay_exists;
+  bool max_delay_exists;
+  bool is_input;
+  bool clock_fall;
+  bool source_latency_included;
+  bool network_latency_included;
+};
+
+struct ClockLatencyConstraint
+{
+  // Network latency only; set_clock_latency -source is not included.
+  // clock_name and pin_name are independently optional, matching OpenSTA's
+  // clock-only, pin-only, and clock/pin network latency constraints.
+  std::string clock_name;
+  std::string pin_name;
+  float min_delay;
+  float max_delay;
+  bool min_delay_exists;
+  bool max_delay_exists;
+};
+
 class Timing
 {
  public:
@@ -241,6 +285,10 @@ class Timing
   std::vector<LogicalConstNetValue> getLogicConstantNetValues();
   std::vector<DisabledTimingArc> getDisabledTimingArcs();
   std::vector<DisabledTimingArcDetail> getDisabledTimingArcDetails();
+  std::vector<std::string> getClockNetNames();
+  std::vector<ClockConstraint> getClockConstraints();
+  std::vector<PortDelayConstraint> getPortDelayConstraints();
+  std::vector<ClockLatencyConstraint> getClockLatencyConstraints();
   float getVoltage();
   // Enable common STA debug categories at a reasonable verbosity.
   // This only toggles STA-side debugPrint categories.
@@ -288,6 +336,7 @@ class Timing
   sta::Graph* cmdGraph();
   sta::Network* cmdLinkedNetwork();
   std::pair<odb::dbITerm*, odb::dbBTerm*> staToDBPin(const sta::Pin* pin);
+  std::string staPinName(const sta::Pin* pin);
   Design* design_;
 };
 

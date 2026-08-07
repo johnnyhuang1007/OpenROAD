@@ -59,6 +59,7 @@ get_db_block();
 
 %template(FloatVector) std::vector<float>;
 %template(FloatVectorVector) std::vector<std::vector<float>>;
+%template(StringVector) std::vector<std::string>;
 %template(TimingArcTableModels) std::vector<ord::TimingArcTableModel>;
 %template(TimingCheckTableModels) std::vector<ord::TimingCheckTableModel>;
 %template(LeakagePowerStates) std::vector<ord::LeakagePowerState>;
@@ -68,6 +69,9 @@ get_db_block();
 %template(LogicalConstNetValues) std::vector<ord::LogicalConstNetValue>;
 %template(DisabledTimingArcs) std::vector<ord::DisabledTimingArc>;
 %template(DisabledTimingArcDetails) std::vector<ord::DisabledTimingArcDetail>;
+%template(ClockConstraints) std::vector<ord::ClockConstraint>;
+%template(PortDelayConstraints) std::vector<ord::PortDelayConstraint>;
+%template(ClockLatencyConstraints) std::vector<ord::ClockLatencyConstraint>;
 
 #ifdef BAZEL
 %include "src/gpl/src/replace-py.i"
