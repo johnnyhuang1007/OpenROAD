@@ -101,6 +101,18 @@ struct TimingArcTableModel
   std::vector<std::vector<float>> slew_table;
 };
 
+struct TimingCheckTableModel
+{
+  std::string from_pin_name;
+  std::string to_pin_name;
+  std::string from_rf;
+  std::string to_rf;
+  std::string role;
+  std::vector<float> table_axis0;
+  std::vector<float> table_axis1;
+  std::vector<std::vector<float>> constraint_table;
+};
+
 class Timing
 {
  public:
@@ -149,6 +161,8 @@ class Timing
   std::vector<odb::dbMaster*> equivCells(odb::dbMaster* master);
 
   std::vector<TimingArcTableModel> getLibertyCellTableModels(
+      odb::dbMaster* master);
+  std::vector<TimingCheckTableModel> getLibertyCellCheckTableModels(
       odb::dbMaster* master);
 
   // ── Summary metrics ─────────────────────────────────────────

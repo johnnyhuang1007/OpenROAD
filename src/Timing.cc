@@ -124,6 +124,40 @@ std::vector<TimingArcTableModel> Timing::getLibertyCellTableModels(
   return tables;
 }
 
+std::vector<TimingCheckTableModel> Timing::getLibertyCellCheckTableModels(
+    odb::dbMaster* master)
+{
+  std::vector<TimingCheckTableModel> tables;
+  sta::LibertyCell* lib_cell = masterLibertyCell(getSta(), master);
+  if (lib_cell == nullptr) {
+    return tables;
+  }
+  for (const sta::TimingArcSet* arc_set : lib_cell->timingArcSets()) {
+    for (const sta::TimingArc* arc : arc_set->arcs()) {
+      const sta::TimingRole* role = arc->role();
+      if (role == nullptr || !role->isTimingCheck()) {
+        continue;
+      }
+      auto* check = dynamic_cast<sta::CheckTableModel*>(arc->model());
+      const sta::TableModel* model = check ? check->checkModel() : nullptr;
+      if (model == nullptr) {
+        continue;
+      }
+      TimingCheckTableModel entry;
+      entry.from_pin_name = arc->from()->name();
+      entry.to_pin_name = arc->to()->name();
+      entry.from_rf = arc->fromEdge()->to_string();
+      entry.to_rf = arc->toEdge()->to_string();
+      entry.role = role->to_string();
+      entry.table_axis0 = axisValues(model->axis1());
+      entry.table_axis1 = axisValues(model->axis2());
+      entry.constraint_table = tableValues(model);
+      tables.push_back(std::move(entry));
+    }
+  }
+  return tables;
+}
+
 sta::dbSta* Timing::getSta()
 {
   return design_->getTech()->getSta();
