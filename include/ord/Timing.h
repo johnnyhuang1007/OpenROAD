@@ -89,6 +89,18 @@ struct TimingPathInfo
   std::vector<TimingArcInfo> arcs;
 };
 
+struct TimingArcTableModel
+{
+  std::string in_pin_name;
+  std::string out_pin_name;
+  std::string in_rf;
+  std::string out_rf;
+  std::vector<float> table_axis0;
+  std::vector<float> table_axis1;
+  std::vector<std::vector<float>> delay_table;
+  std::vector<std::vector<float>> slew_table;
+};
+
 class Timing
 {
  public:
@@ -135,6 +147,9 @@ class Timing
 
   void makeEquivCells();
   std::vector<odb::dbMaster*> equivCells(odb::dbMaster* master);
+
+  std::vector<TimingArcTableModel> getLibertyCellTableModels(
+      odb::dbMaster* master);
 
   // ── Summary metrics ─────────────────────────────────────────
   float getWorstSlack(MinMax minmax = Max);

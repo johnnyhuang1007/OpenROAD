@@ -38,14 +38,90 @@
 #include "sta/Search.hh"
 #include "sta/SearchClass.hh"
 #include "sta/StringUtil.hh"
+#include "sta/TableModel.hh"
 #include "sta/TimingArc.hh"
 #include "sta/TimingRole.hh"
 #include "utl/Logger.h"
+
+namespace {
+
+std::vector<float> axisValues(const sta::TableAxis* axis)
+{
+  if (axis == nullptr) {
+    return {};
+  }
+  const sta::FloatSeq& values = axis->values();
+  return {values.begin(), values.end()};
+}
+
+std::vector<std::vector<float>> tableValues(const sta::TableModel* model)
+{
+  if (model == nullptr) {
+    return {};
+  }
+  const sta::TableAxis* axis1 = model->axis1();
+  const sta::TableAxis* axis2 = model->axis2();
+  const size_t rows = axis1 ? std::max<size_t>(axis1->size(), 1) : 1;
+  const size_t cols = axis2 ? std::max<size_t>(axis2->size(), 1) : 1;
+  std::vector<std::vector<float>> values(rows, std::vector<float>(cols, 0.0f));
+  for (size_t row = 0; row < rows; ++row) {
+    for (size_t col = 0; col < cols; ++col) {
+      values[row][col] = model->value(row, col, 0);
+    }
+  }
+  return values;
+}
+
+sta::LibertyCell* masterLibertyCell(sta::dbSta* sta, odb::dbMaster* master)
+{
+  if (master == nullptr) {
+    return nullptr;
+  }
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta::Cell* cell = network->dbToSta(master);
+  return cell ? network->libertyCell(cell) : nullptr;
+}
+
+}  // namespace
 
 namespace ord {
 
 Timing::Timing(Design* design) : design_(design)
 {
+}
+
+std::vector<TimingArcTableModel> Timing::getLibertyCellTableModels(
+    odb::dbMaster* master)
+{
+  std::vector<TimingArcTableModel> tables;
+  sta::LibertyCell* lib_cell = masterLibertyCell(getSta(), master);
+  if (lib_cell == nullptr) {
+    return tables;
+  }
+  for (const sta::TimingArcSet* arc_set : lib_cell->timingArcSets()) {
+    for (const sta::TimingArc* arc : arc_set->arcs()) {
+      sta::GateTableModel* gate_model = arc->gateTableModel();
+      if (gate_model == nullptr) {
+        continue;
+      }
+      const sta::TableModel* delay = gate_model->delayModel();
+      const sta::TableModel* slew = gate_model->slewModel();
+      const sta::TableModel* axes = delay ? delay : slew;
+      TimingArcTableModel entry;
+      entry.in_pin_name = arc->from()->name();
+      entry.out_pin_name = arc->to()->name();
+      entry.in_rf = arc->fromEdge()->to_string();
+      entry.out_rf = arc->toEdge()->to_string();
+      if (axes != nullptr) {
+        entry.table_axis0 = axisValues(axes->axis1());
+        entry.table_axis1 = axisValues(axes->axis2());
+      }
+      entry.delay_table = tableValues(delay);
+      entry.slew_table = tableValues(slew);
+      tables.push_back(std::move(entry));
+    }
+  }
+  return tables;
 }
 
 sta::dbSta* Timing::getSta()
