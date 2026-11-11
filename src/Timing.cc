@@ -727,16 +727,6 @@ float Timing::dynamicPower(odb::dbInst* inst, sta::Scene* corner)
   return (power.internal() + power.switching());
 }
 
-float Timing::internalPower(odb::dbInst* inst, sta::Scene* corner)
-{
-  sta::dbSta* sta = getSta();
-  sta::Instance* sta_inst = sta->getDbNetwork()->dbToSta(inst);
-  if (!sta_inst) {
-    return 0.0;
-  }
-  return sta->power(sta_inst, corner).internal();
-}
-
 void Timing::makeEquivCells()
 {
   rsz::Resizer* resizer = design_->getResizer();
