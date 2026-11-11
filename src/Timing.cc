@@ -82,6 +82,14 @@ sta::LibertyCell* masterLibertyCell(sta::dbSta* sta, odb::dbMaster* master)
   return cell ? network->libertyCell(cell) : nullptr;
 }
 
+sta::PwrActivity staPinActivity(sta::dbSta* sta, const sta::Pin* pin)
+{
+  if (pin == nullptr) {
+    return sta::PwrActivity();
+  }
+  return sta->activity(pin, sta->cmdScene());
+}
+
 }  // namespace
 
 namespace ord {
@@ -187,6 +195,42 @@ std::vector<LogicalConstNetValue> Timing::getLogicConstantNetValues()
     }
   }
   return values;
+}
+
+float Timing::getVoltage()
+{
+  sta::dbSta* sta = getSta();
+  const sta::Pvt* pvt
+      = sta->cmdScene()->sdc()->operatingConditions(sta::MinMax::max());
+  if (pvt == nullptr) {
+    sta::LibertyLibrary* lib = sta->getDbNetwork()->defaultLibertyLibrary();
+    pvt = lib ? lib->defaultOperatingConditions() : nullptr;
+  }
+  return pvt ? pvt->voltage() : 0.0f;
+}
+
+float Timing::getPinActivityDensity(odb::dbITerm* db_pin)
+{
+  sta::dbSta* sta = getSta();
+  return staPinActivity(sta, sta->getDbNetwork()->dbToSta(db_pin)).density();
+}
+
+float Timing::getPinActivityDensity(odb::dbBTerm* db_pin)
+{
+  sta::dbSta* sta = getSta();
+  return staPinActivity(sta, sta->getDbNetwork()->dbToSta(db_pin)).density();
+}
+
+float Timing::getPinActivityDuty(odb::dbITerm* db_pin)
+{
+  sta::dbSta* sta = getSta();
+  return staPinActivity(sta, sta->getDbNetwork()->dbToSta(db_pin)).duty();
+}
+
+float Timing::getPinActivityDuty(odb::dbBTerm* db_pin)
+{
+  sta::dbSta* sta = getSta();
+  return staPinActivity(sta, sta->getDbNetwork()->dbToSta(db_pin)).duty();
 }
 
 std::vector<DisabledTimingArcDetail> Timing::getDisabledTimingArcDetails()

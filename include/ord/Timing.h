@@ -185,6 +185,12 @@ class Timing
   std::vector<LogicalConstNetValue> getLogicConstantNetValues();
   std::vector<DisabledTimingArcDetail> getDisabledTimingArcDetails();
 
+  float getVoltage();
+  float getPinActivityDensity(odb::dbITerm* db_pin);
+  float getPinActivityDensity(odb::dbBTerm* db_pin);
+  float getPinActivityDuty(odb::dbITerm* db_pin);
+  float getPinActivityDuty(odb::dbBTerm* db_pin);
+
   // ── Summary metrics ─────────────────────────────────────────
   float getWorstSlack(MinMax minmax = Max);
   float getTotalNegativeSlack(MinMax minmax = Max);
