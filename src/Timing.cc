@@ -189,6 +189,35 @@ std::vector<LogicalConstNetValue> Timing::getLogicConstantNetValues()
   return values;
 }
 
+std::vector<DisabledTimingArcDetail> Timing::getDisabledTimingArcDetails()
+{
+  std::vector<DisabledTimingArcDetail> details;
+  sta::dbSta* sta = getSta();
+  sta->findLogicConstants();
+  sta::Graph* graph = sta->graph();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  const sta::Scene* scene = sta->cmdScene();
+  const sta::Mode* mode = scene->mode();
+  const sta::Sdc* sdc = scene->sdc();
+  for (sta::Edge* edge : sta->disabledEdges(mode)) {
+    if (edge->role()->isWire()) {
+      continue;
+    }
+    const sta::Pin* from_pin = edge->from(graph)->pin();
+    const sta::Pin* to_pin = edge->to(graph)->pin();
+    DisabledTimingArcDetail detail;
+    detail.inst_name = network->pathName(network->instance(from_pin));
+    detail.from_pin_name = network->name(network->port(from_pin));
+    detail.to_pin_name = network->name(network->port(to_pin));
+    detail.sim_sense = sta::to_string(sta->simTimingSense(edge, mode));
+    detail.disabled_constraint = sta->isDisabledConstraint(edge, sdc) ? 1 : 0;
+    detail.disabled_loop = sta->isDisabledLoop(edge) ? 1 : 0;
+    detail.disabled_preset_clear = sta->isDisabledPresetClr(edge) ? 1 : 0;
+    details.push_back(std::move(detail));
+  }
+  return details;
+}
+
 sta::dbSta* Timing::getSta()
 {
   return design_->getTech()->getSta();

@@ -68,6 +68,7 @@ get_db_block();
 %template(TimingArcTableModels) std::vector<ord::TimingArcTableModel>;
 %template(TimingCheckTableModels) std::vector<ord::TimingCheckTableModel>;
 %template(LogicalConstNetValues) std::vector<ord::LogicalConstNetValue>;
+%template(DisabledTimingArcDetails) std::vector<ord::DisabledTimingArcDetail>;
 
 #ifdef BAZEL
 %include "src/gpl/src/replace-py.i"

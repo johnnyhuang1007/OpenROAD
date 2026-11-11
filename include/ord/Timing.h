@@ -119,6 +119,17 @@ struct LogicalConstNetValue
   int value = 0;
 };
 
+struct DisabledTimingArcDetail
+{
+  std::string inst_name;
+  std::string from_pin_name;
+  std::string to_pin_name;
+  std::string sim_sense;
+  int disabled_constraint = 0;
+  int disabled_loop = 0;
+  int disabled_preset_clear = 0;
+};
+
 class Timing
 {
  public:
@@ -171,6 +182,7 @@ class Timing
   std::vector<TimingCheckTableModel> getLibertyCellCheckTableModels(
       odb::dbMaster* master);
   std::vector<LogicalConstNetValue> getLogicConstantNetValues();
+  std::vector<DisabledTimingArcDetail> getDisabledTimingArcDetails();
 
   // ── Summary metrics ─────────────────────────────────────────
   float getWorstSlack(MinMax minmax = Max);
