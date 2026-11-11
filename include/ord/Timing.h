@@ -206,6 +206,7 @@ class Timing
   float getMaxSlewLimit(odb::dbMTerm* pin);
   float staticPower(odb::dbInst* inst, sta::Scene* corner);
   float dynamicPower(odb::dbInst* inst, sta::Scene* corner);
+  float internalPower(odb::dbInst* inst, sta::Scene* corner);
 
   std::vector<odb::dbMTerm*> getTimingFanoutFrom(odb::dbMTerm* input);
   std::vector<sta::Scene*> getCorners();
