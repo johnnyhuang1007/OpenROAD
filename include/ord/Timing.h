@@ -145,6 +145,28 @@ struct InstLeakStateDuty
   float duty = 0.0f;
 };
 
+struct InternalPowerTableModel
+{
+  std::string pin_name;
+  std::string related_pin_name;
+  std::string related_pg_pin;
+  std::string when;
+  bool when_exists = false;
+  bool rise_has_table = false;
+  bool fall_has_table = false;
+  std::vector<std::vector<float>> rise_power_table;
+  std::vector<std::vector<float>> fall_power_table;
+};
+
+struct InstInternalPowerState
+{
+  std::string when;
+  bool when_exists = false;
+  float duty = 0.0f;
+  float from_density = 0.0f;
+  float to_density = 0.0f;
+};
+
 class Timing
 {
  public:
@@ -207,6 +229,10 @@ class Timing
   float getPinActivityDuty(odb::dbBTerm* db_pin);
   std::vector<LeakagePowerState> getMasterLeakageStates(odb::dbMaster* master);
   std::vector<InstLeakStateDuty> getInstLeakStateDuties(odb::dbInst* inst);
+  std::vector<InternalPowerTableModel> getMasterInternalPowerTables(
+      odb::dbMaster* master);
+  std::vector<InstInternalPowerState> getInstInternalPowerStates(
+      odb::dbInst* inst);
 
   // ── Summary metrics ─────────────────────────────────────────
   float getWorstSlack(MinMax minmax = Max);

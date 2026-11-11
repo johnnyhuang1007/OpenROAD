@@ -71,6 +71,8 @@ get_db_block();
 %template(DisabledTimingArcDetails) std::vector<ord::DisabledTimingArcDetail>;
 %template(LeakagePowerStates) std::vector<ord::LeakagePowerState>;
 %template(InstLeakStateDuties) std::vector<ord::InstLeakStateDuty>;
+%template(InternalPowerTableModels) std::vector<ord::InternalPowerTableModel>;
+%template(InstInternalPowerStates) std::vector<ord::InstInternalPowerState>;
 
 #ifdef BAZEL
 %include "src/gpl/src/replace-py.i"

@@ -24,6 +24,7 @@
 #include "sta/Graph.hh"
 #include "sta/GraphDelayCalc.hh"
 #include "sta/FuncExpr.hh"
+#include "sta/InternalPower.hh"
 #include "sta/LeakagePower.hh"
 #include "sta/Liberty.hh"
 #include "sta/LibertyClass.hh"
@@ -56,7 +57,8 @@ std::vector<float> axisValues(const sta::TableAxis* axis)
   return {values.begin(), values.end()};
 }
 
-std::vector<std::vector<float>> tableValues(const sta::TableModel* model)
+std::vector<std::vector<float>> tableValues(const sta::TableModel* model,
+                                            float scale = 1.0f)
 {
   if (model == nullptr) {
     return {};
@@ -68,7 +70,7 @@ std::vector<std::vector<float>> tableValues(const sta::TableModel* model)
   std::vector<std::vector<float>> values(rows, std::vector<float>(cols, 0.0f));
   for (size_t row = 0; row < rows; ++row) {
     for (size_t col = 0; col < cols; ++col) {
-      values[row][col] = model->value(row, col, 0);
+      values[row][col] = model->value(row, col, 0) * scale;
     }
   }
   return values;
@@ -283,6 +285,66 @@ std::vector<InstLeakStateDuty> Timing::getInstLeakStateDuties(odb::dbInst* inst)
     states.push_back({when ? when->to_string() : "",
                       when != nullptr,
                       sta->leakageStateDuty(sta_inst, &leak, scene)});
+  }
+  return states;
+}
+
+std::vector<InternalPowerTableModel> Timing::getMasterInternalPowerTables(
+    odb::dbMaster* master)
+{
+  std::vector<InternalPowerTableModel> tables;
+  sta::dbSta* sta = getSta();
+  sta::LibertyCell* cell = masterLibertyCell(sta, master);
+  if (cell == nullptr) {
+    return tables;
+  }
+  sta::Scene* scene = sta->cmdScene();
+  sta::LibertyCell* scene_cell = cell->sceneCell(scene, sta::MinMax::max());
+  if (scene_cell == nullptr) {
+    return tables;
+  }
+  const sta::Pvt* pvt = scene->sdc()->operatingConditions(sta::MinMax::max());
+  for (const sta::InternalPower& pwr : scene_cell->internalPowers()) {
+    InternalPowerTableModel entry;
+    entry.pin_name = pwr.port() ? pwr.port()->name() : "";
+    entry.related_pin_name = pwr.relatedPort() ? pwr.relatedPort()->name() : "";
+    entry.related_pg_pin = pwr.relatedPgPin() ? pwr.relatedPgPin()->name() : "";
+    sta::FuncExpr* when = pwr.when();
+    entry.when_exists = when != nullptr;
+    entry.when = when ? when->to_string() : "";
+    const sta::TableModel* rise = pwr.model(sta::RiseFall::rise()).model();
+    const sta::TableModel* fall = pwr.model(sta::RiseFall::fall()).model();
+    entry.rise_has_table = rise != nullptr;
+    entry.fall_has_table = fall != nullptr;
+    if (rise != nullptr) {
+      entry.rise_power_table
+          = tableValues(rise, rise->scaleFactor(scene_cell, pvt));
+    }
+    if (fall != nullptr) {
+      entry.fall_power_table
+          = tableValues(fall, fall->scaleFactor(scene_cell, pvt));
+    }
+    tables.push_back(std::move(entry));
+  }
+  return tables;
+}
+
+std::vector<InstInternalPowerState> Timing::getInstInternalPowerStates(
+    odb::dbInst* inst)
+{
+  std::vector<InstInternalPowerState> states;
+  sta::dbSta* sta = getSta();
+  sta::Instance* sta_inst = inst ? sta->getDbNetwork()->dbToSta(inst) : nullptr;
+  if (sta_inst == nullptr) {
+    return states;
+  }
+  for (const sta::PwrInternalRowState& row :
+       sta->internalPowerRowStates(sta_inst, sta->cmdScene())) {
+    states.push_back({row.when,
+                      row.when_exists,
+                      row.duty,
+                      row.from_density,
+                      row.to_density});
   }
   return states;
 }
