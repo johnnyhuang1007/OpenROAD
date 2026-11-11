@@ -113,6 +113,12 @@ struct TimingCheckTableModel
   std::vector<std::vector<float>> constraint_table;
 };
 
+struct LogicalConstNetValue
+{
+  std::string net_name;
+  int value = 0;
+};
+
 class Timing
 {
  public:
@@ -164,6 +170,7 @@ class Timing
       odb::dbMaster* master);
   std::vector<TimingCheckTableModel> getLibertyCellCheckTableModels(
       odb::dbMaster* master);
+  std::vector<LogicalConstNetValue> getLogicConstantNetValues();
 
   // ── Summary metrics ─────────────────────────────────────────
   float getWorstSlack(MinMax minmax = Max);

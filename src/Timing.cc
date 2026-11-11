@@ -158,6 +158,37 @@ std::vector<TimingCheckTableModel> Timing::getLibertyCellCheckTableModels(
   return tables;
 }
 
+std::vector<LogicalConstNetValue> Timing::getLogicConstantNetValues()
+{
+  std::vector<LogicalConstNetValue> values;
+  odb::dbBlock* block = design_->getBlock();
+  if (block == nullptr) {
+    return values;
+  }
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta->findLogicConstants();
+  const sta::Mode* mode = sta->cmdScene()->mode();
+  for (odb::dbNet* net : block->getNets()) {
+    odb::dbITerm* driver = nullptr;
+    for (odb::dbITerm* iterm : net->getITerms()) {
+      if (iterm->isOutputSignal()) {
+        driver = iterm;
+        break;
+      }
+    }
+    if (driver == nullptr) {
+      continue;
+    }
+    const sta::LogicValue value
+        = sta->simLogicValue(network->dbToSta(driver), mode);
+    if (value == sta::LogicValue::zero || value == sta::LogicValue::one) {
+      values.push_back({net->getName(), value == sta::LogicValue::one ? 1 : 0});
+    }
+  }
+  return values;
+}
+
 sta::dbSta* Timing::getSta()
 {
   return design_->getTech()->getSta();
