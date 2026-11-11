@@ -23,6 +23,8 @@
 #include "sta/Delay.hh"
 #include "sta/Graph.hh"
 #include "sta/GraphDelayCalc.hh"
+#include "sta/FuncExpr.hh"
+#include "sta/LeakagePower.hh"
 #include "sta/Liberty.hh"
 #include "sta/LibertyClass.hh"
 #include "sta/MinMax.hh"
@@ -231,6 +233,58 @@ float Timing::getPinActivityDuty(odb::dbBTerm* db_pin)
 {
   sta::dbSta* sta = getSta();
   return staPinActivity(sta, sta->getDbNetwork()->dbToSta(db_pin)).duty();
+}
+
+std::vector<LeakagePowerState> Timing::getMasterLeakageStates(
+    odb::dbMaster* master)
+{
+  std::vector<LeakagePowerState> states;
+  sta::dbSta* sta = getSta();
+  sta::LibertyCell* cell = masterLibertyCell(sta, master);
+  if (cell == nullptr) {
+    return states;
+  }
+  sta::LibertyCell* scene_cell
+      = cell->sceneCell(sta->cmdScene(), sta::MinMax::max());
+  if (scene_cell == nullptr) {
+    return states;
+  }
+  for (const sta::LeakagePower& leak : scene_cell->leakagePowers()) {
+    sta::FuncExpr* when = leak.when();
+    states.push_back(
+        {when ? when->to_string() : "", leak.power(), when != nullptr, false});
+  }
+  float cell_leakage = 0.0f;
+  bool cell_leakage_exists = false;
+  cell->leakagePower(cell_leakage, cell_leakage_exists);
+  if (cell_leakage_exists) {
+    states.push_back({"", cell_leakage, false, true});
+  }
+  return states;
+}
+
+std::vector<InstLeakStateDuty> Timing::getInstLeakStateDuties(odb::dbInst* inst)
+{
+  std::vector<InstLeakStateDuty> states;
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta::Instance* sta_inst = inst ? network->dbToSta(inst) : nullptr;
+  sta::LibertyCell* cell = sta_inst ? network->libertyCell(sta_inst) : nullptr;
+  if (cell == nullptr) {
+    return states;
+  }
+  sta::Scene* scene = sta->cmdScene();
+  sta::LibertyCell* scene_cell = cell->sceneCell(scene, sta::MinMax::max());
+  if (scene_cell == nullptr) {
+    return states;
+  }
+  for (const sta::LeakagePower& leak : scene_cell->leakagePowers()) {
+    sta::FuncExpr* when = leak.when();
+    states.push_back({when ? when->to_string() : "",
+                      when != nullptr,
+                      sta->leakageStateDuty(sta_inst, &leak, scene)});
+  }
+  return states;
 }
 
 std::vector<DisabledTimingArcDetail> Timing::getDisabledTimingArcDetails()

@@ -130,6 +130,21 @@ struct DisabledTimingArcDetail
   int disabled_preset_clear = 0;
 };
 
+struct LeakagePowerState
+{
+  std::string when;
+  float leakage = 0.0f;
+  bool when_exists = false;
+  bool is_cell_leakage = false;
+};
+
+struct InstLeakStateDuty
+{
+  std::string when;
+  bool when_exists = false;
+  float duty = 0.0f;
+};
+
 class Timing
 {
  public:
@@ -190,6 +205,8 @@ class Timing
   float getPinActivityDensity(odb::dbBTerm* db_pin);
   float getPinActivityDuty(odb::dbITerm* db_pin);
   float getPinActivityDuty(odb::dbBTerm* db_pin);
+  std::vector<LeakagePowerState> getMasterLeakageStates(odb::dbMaster* master);
+  std::vector<InstLeakStateDuty> getInstLeakStateDuties(odb::dbInst* inst);
 
   // ── Summary metrics ─────────────────────────────────────────
   float getWorstSlack(MinMax minmax = Max);

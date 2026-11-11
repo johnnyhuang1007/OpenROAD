@@ -69,6 +69,8 @@ get_db_block();
 %template(TimingCheckTableModels) std::vector<ord::TimingCheckTableModel>;
 %template(LogicalConstNetValues) std::vector<ord::LogicalConstNetValue>;
 %template(DisabledTimingArcDetails) std::vector<ord::DisabledTimingArcDetail>;
+%template(LeakagePowerStates) std::vector<ord::LeakagePowerState>;
+%template(InstLeakStateDuties) std::vector<ord::InstLeakStateDuty>;
 
 #ifdef BAZEL
 %include "src/gpl/src/replace-py.i"
