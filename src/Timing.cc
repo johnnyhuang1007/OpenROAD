@@ -494,6 +494,14 @@ float Timing::getPortCap(odb::dbITerm* pin, sta::Scene* corner, MinMax minmax)
   return sta->capacitance(lib_port, corner, getMinMax(minmax));
 }
 
+float Timing::getPortCap(odb::dbMTerm* pin, sta::Scene* corner, MinMax minmax)
+{
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta::LibertyPort* lib_port = network->libertyPort(network->dbToSta(pin));
+  return sta->capacitance(lib_port, corner, getMinMax(minmax));
+}
+
 float Timing::getMaxCapLimit(odb::dbMTerm* pin)
 {
   sta::dbSta* sta = getSta();

@@ -164,6 +164,7 @@ class Timing
 
   float getNetCap(odb::dbNet* net, sta::Scene* corner, MinMax minmax);
   float getPortCap(odb::dbITerm* pin, sta::Scene* corner, MinMax minmax);
+  float getPortCap(odb::dbMTerm* pin, sta::Scene* corner, MinMax minmax);
   float getMaxCapLimit(odb::dbMTerm* pin);
   float getMaxSlewLimit(odb::dbMTerm* pin);
   float staticPower(odb::dbInst* inst, sta::Scene* corner);
