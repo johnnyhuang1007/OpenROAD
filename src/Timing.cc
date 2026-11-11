@@ -179,8 +179,10 @@ std::vector<LogicalConstNetValue> Timing::getLogicConstantNetValues()
   }
   sta::dbSta* sta = getSta();
   sta::dbNetwork* network = sta->getDbNetwork();
-  sta->findLogicConstants();
-  const sta::Mode* mode = sta->cmdScene()->mode();
+  // findLogicConstants() would mark only SDC-independent constants valid and
+  // hide set_case_analysis; clear instead so the mode-aware query repropagates.
+  sta->clearLogicConstants();
+  const sta::Mode* mode = sta->cmdMode();
   for (odb::dbNet* net : block->getNets()) {
     odb::dbITerm* driver = nullptr;
     for (odb::dbITerm* iterm : net->getITerms()) {
@@ -353,12 +355,13 @@ std::vector<DisabledTimingArcDetail> Timing::getDisabledTimingArcDetails()
 {
   std::vector<DisabledTimingArcDetail> details;
   sta::dbSta* sta = getSta();
-  sta->findLogicConstants();
+  // See getLogicConstantNetValues: repropagate with the mode's constraints.
+  sta->clearLogicConstants();
+  sta->ensureGraph();
   sta::Graph* graph = sta->graph();
   sta::dbNetwork* network = sta->getDbNetwork();
-  const sta::Scene* scene = sta->cmdScene();
-  const sta::Mode* mode = scene->mode();
-  const sta::Sdc* sdc = scene->sdc();
+  const sta::Mode* mode = sta->cmdMode();
+  const sta::Sdc* sdc = mode->sdc();
   for (sta::Edge* edge : sta->disabledEdges(mode)) {
     if (edge->role()->isWire()) {
       continue;
