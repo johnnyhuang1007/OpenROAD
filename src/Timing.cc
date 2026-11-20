@@ -170,19 +170,27 @@ std::vector<TimingCheckTableModel> Timing::getLibertyCellCheckTableModels(
   return tables;
 }
 
-std::vector<LogicalConstNetValue> Timing::getLogicConstantNetValues()
+namespace {
+
+// Make the mode's logic constants valid. Constants that are already
+// propagated with the mode's constraints (and not invalidated since) are
+// reused; anything else is cleared and propagated from scratch.
+// findLogicConstants() would mark only SDC-independent constants valid and
+// hide set_case_analysis, so that state is never reused.
+void ensureLogicConstants(sta::dbSta* sta, const sta::Mode* mode)
+{
+  if (!sta->logicConstantsPropagated(mode)) {
+    sta->clearLogicConstants();
+  }
+}
+
+std::vector<LogicalConstNetValue> collectLogicConstantNetValues(
+    odb::dbBlock* block,
+    sta::dbSta* sta,
+    const sta::Mode* mode)
 {
   std::vector<LogicalConstNetValue> values;
-  odb::dbBlock* block = design_->getBlock();
-  if (block == nullptr) {
-    return values;
-  }
-  sta::dbSta* sta = getSta();
   sta::dbNetwork* network = sta->getDbNetwork();
-  // findLogicConstants() would mark only SDC-independent constants valid and
-  // hide set_case_analysis; clear instead so the mode-aware query repropagates.
-  sta->clearLogicConstants();
-  const sta::Mode* mode = sta->cmdMode();
   for (odb::dbNet* net : block->getNets()) {
     odb::dbITerm* driver = nullptr;
     for (odb::dbITerm* iterm : net->getITerms()) {
@@ -201,6 +209,48 @@ std::vector<LogicalConstNetValue> Timing::getLogicConstantNetValues()
     }
   }
   return values;
+}
+
+std::vector<DisabledTimingArcDetail> collectDisabledTimingArcDetails(
+    sta::dbSta* sta,
+    const sta::Mode* mode)
+{
+  std::vector<DisabledTimingArcDetail> details;
+  sta->ensureGraph();
+  sta::Graph* graph = sta->graph();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  const sta::Sdc* sdc = mode->sdc();
+  for (sta::Edge* edge : sta->disabledEdges(mode)) {
+    if (edge->role()->isWire()) {
+      continue;
+    }
+    const sta::Pin* from_pin = edge->from(graph)->pin();
+    const sta::Pin* to_pin = edge->to(graph)->pin();
+    DisabledTimingArcDetail detail;
+    detail.inst_name = network->pathName(network->instance(from_pin));
+    detail.from_pin_name = network->name(network->port(from_pin));
+    detail.to_pin_name = network->name(network->port(to_pin));
+    detail.sim_sense = sta::to_string(sta->simTimingSense(edge, mode));
+    detail.disabled_constraint = sta->isDisabledConstraint(edge, sdc) ? 1 : 0;
+    detail.disabled_loop = sta->isDisabledLoop(edge) ? 1 : 0;
+    detail.disabled_preset_clear = sta->isDisabledPresetClr(edge) ? 1 : 0;
+    details.push_back(std::move(detail));
+  }
+  return details;
+}
+
+}  // namespace
+
+std::vector<LogicalConstNetValue> Timing::getLogicConstantNetValues()
+{
+  odb::dbBlock* block = design_->getBlock();
+  if (block == nullptr) {
+    return {};
+  }
+  sta::dbSta* sta = getSta();
+  const sta::Mode* mode = sta->cmdMode();
+  ensureLogicConstants(sta, mode);
+  return collectLogicConstantNetValues(block, sta, mode);
 }
 
 float Timing::getVoltage()
@@ -353,32 +403,25 @@ std::vector<InstInternalPowerState> Timing::getInstInternalPowerStates(
 
 std::vector<DisabledTimingArcDetail> Timing::getDisabledTimingArcDetails()
 {
-  std::vector<DisabledTimingArcDetail> details;
   sta::dbSta* sta = getSta();
-  // See getLogicConstantNetValues: repropagate with the mode's constraints.
-  sta->clearLogicConstants();
-  sta->ensureGraph();
-  sta::Graph* graph = sta->graph();
-  sta::dbNetwork* network = sta->getDbNetwork();
   const sta::Mode* mode = sta->cmdMode();
-  const sta::Sdc* sdc = mode->sdc();
-  for (sta::Edge* edge : sta->disabledEdges(mode)) {
-    if (edge->role()->isWire()) {
-      continue;
-    }
-    const sta::Pin* from_pin = edge->from(graph)->pin();
-    const sta::Pin* to_pin = edge->to(graph)->pin();
-    DisabledTimingArcDetail detail;
-    detail.inst_name = network->pathName(network->instance(from_pin));
-    detail.from_pin_name = network->name(network->port(from_pin));
-    detail.to_pin_name = network->name(network->port(to_pin));
-    detail.sim_sense = sta::to_string(sta->simTimingSense(edge, mode));
-    detail.disabled_constraint = sta->isDisabledConstraint(edge, sdc) ? 1 : 0;
-    detail.disabled_loop = sta->isDisabledLoop(edge) ? 1 : 0;
-    detail.disabled_preset_clear = sta->isDisabledPresetClr(edge) ? 1 : 0;
-    details.push_back(std::move(detail));
+  ensureLogicConstants(sta, mode);
+  return collectDisabledTimingArcDetails(sta, mode);
+}
+
+LogicalTimingCapture Timing::getLogicalTimingCapture()
+{
+  // One constant propagation shared by both queries.
+  LogicalTimingCapture capture;
+  odb::dbBlock* block = design_->getBlock();
+  sta::dbSta* sta = getSta();
+  const sta::Mode* mode = sta->cmdMode();
+  ensureLogicConstants(sta, mode);
+  if (block != nullptr) {
+    capture.const_nets = collectLogicConstantNetValues(block, sta, mode);
   }
-  return details;
+  capture.disabled_arcs = collectDisabledTimingArcDetails(sta, mode);
+  return capture;
 }
 
 sta::dbSta* Timing::getSta()

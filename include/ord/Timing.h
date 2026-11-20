@@ -130,6 +130,12 @@ struct DisabledTimingArcDetail
   int disabled_preset_clear = 0;
 };
 
+struct LogicalTimingCapture
+{
+  std::vector<LogicalConstNetValue> const_nets;
+  std::vector<DisabledTimingArcDetail> disabled_arcs;
+};
+
 struct LeakagePowerState
 {
   std::string when;
@@ -221,6 +227,8 @@ class Timing
       odb::dbMaster* master);
   std::vector<LogicalConstNetValue> getLogicConstantNetValues();
   std::vector<DisabledTimingArcDetail> getDisabledTimingArcDetails();
+  // Both of the above from a single constant propagation.
+  LogicalTimingCapture getLogicalTimingCapture();
 
   float getVoltage();
   float getPinActivityDensity(odb::dbITerm* db_pin);
