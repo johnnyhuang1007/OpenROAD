@@ -173,6 +173,39 @@ struct InstInternalPowerState
   float to_density = 0.0f;
 };
 
+// Native-endian float32/int64 arrays. Python bindings return owned bytes,
+// rather than creating one SWIG proxy for each power row.
+struct PowerCaptureBuffer
+{
+  std::string data;
+};
+
+struct MasterPowerRows
+{
+  std::string master_name;
+  std::vector<std::string> leakage_when;
+  std::vector<std::string> internal_when;
+};
+
+struct PowerCapture
+{
+  PowerCaptureBuffer activity;
+  PowerCaptureBuffer duty;
+  PowerCaptureBuffer gate_master;
+  PowerCaptureBuffer leakage_duty;
+  PowerCaptureBuffer leakage_range;
+  PowerCaptureBuffer internal_duty;
+  PowerCaptureBuffer internal_from_density;
+  PowerCaptureBuffer internal_to_density;
+  PowerCaptureBuffer internal_range;
+  std::vector<MasterPowerRows> masters;
+  float voltage = 0.0f;
+  double preparation_seconds = 0.0;
+  double net_seconds = 0.0;
+  double leakage_seconds = 0.0;
+  double internal_seconds = 0.0;
+};
+
 class Timing
 {
  public:
@@ -241,6 +274,8 @@ class Timing
       odb::dbMaster* master);
   std::vector<InstInternalPowerState> getInstInternalPowerStates(
       odb::dbInst* inst);
+  PowerCapture getPowerCapture(const std::vector<std::string>& net_names,
+                               const std::vector<std::string>& inst_names);
 
   // ── Summary metrics ─────────────────────────────────────────
   float getWorstSlack(MinMax minmax = Max);

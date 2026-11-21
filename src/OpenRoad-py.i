@@ -57,10 +57,19 @@ get_db_block();
 %template(ITerms) std::vector<odb::dbITerm*>;
 %template(BTerms) std::vector<odb::dbBTerm*>;
 %template(EndpointSlacks) std::vector<ord::EndpointSlack>;
+%template(PowerCaptureStrings) std::vector<std::string>;
 %include "ord/Tech.h"
 %include "ord/Design.h"
 
+// These fields are packed arrays, not UTF-8 strings. Copy into Python-owned
+// bytes so they remain valid after the enclosing capture is destroyed.
+%ignore ord::PowerCaptureBuffer::data;
+%typemap(out) ord::PowerCaptureBuffer * {
+  $result = PyBytes_FromStringAndSize($1->data.data(), $1->data.size());
+}
+
 %include "ord/Timing.h"
+%template(MasterPowerRowsVector) std::vector<ord::MasterPowerRows>;
 %template(ClockInfos) std::vector<ord::ClockInfo>;
 %template(TimingArcInfos) std::vector<ord::TimingArcInfo>;
 %template(TimingPathInfos) std::vector<ord::TimingPathInfo>;

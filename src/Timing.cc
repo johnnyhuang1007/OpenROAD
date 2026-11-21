@@ -5,8 +5,12 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
+#include <cstdint>
 #include <cstring>
 #include <set>
+#include <stdexcept>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -18,6 +22,7 @@
 #include "ord/Design.h"
 #include "ord/OpenRoad.hh"
 #include "ord/Tech.h"
+#include "power/Power.hh"
 #include "rsz/Resizer.hh"
 #include "sta/Clock.hh"
 #include "sta/Delay.hh"
@@ -399,6 +404,209 @@ std::vector<InstInternalPowerState> Timing::getInstInternalPowerStates(
                       row.to_density});
   }
   return states;
+}
+
+namespace {
+
+using PowerCaptureClock = std::chrono::steady_clock;
+
+double powerCaptureSeconds(PowerCaptureClock::time_point start)
+{
+  return std::chrono::duration<double>(PowerCaptureClock::now() - start)
+      .count();
+}
+
+template <typename T>
+PowerCaptureBuffer packPowerValues(const std::vector<T>& values)
+{
+  static_assert(sizeof(float) == 4 && sizeof(int64_t) == 8);
+  if (values.empty()) {
+    return {};
+  }
+  return {std::string(reinterpret_cast<const char*>(values.data()),
+                      values.size() * sizeof(T))};
+}
+
+// Match power_loader._activity_pin_candidates: output ITerms first, then
+// INPUT/INOUT BTerms, then all ITerms, then all BTerms, each in name order.
+const sta::Pin* powerCaptureNetPin(odb::dbNet* net, sta::dbNetwork* network)
+{
+  odb::dbITerm* output = nullptr;
+  odb::dbITerm* any_iterm = nullptr;
+  for (odb::dbITerm* iterm : net->getITerms()) {
+    if (any_iterm == nullptr || iterm->getName() < any_iterm->getName()) {
+      any_iterm = iterm;
+    }
+    if (iterm->isOutputSignal()
+        && (output == nullptr || iterm->getName() < output->getName())) {
+      output = iterm;
+    }
+  }
+  if (output != nullptr) {
+    return network->dbToSta(output);
+  }
+  odb::dbBTerm* input = nullptr;
+  odb::dbBTerm* any_bterm = nullptr;
+  for (odb::dbBTerm* bterm : net->getBTerms()) {
+    if (any_bterm == nullptr || bterm->getName() < any_bterm->getName()) {
+      any_bterm = bterm;
+    }
+    if ((bterm->getIoType() == odb::dbIoType::INPUT
+         || bterm->getIoType() == odb::dbIoType::INOUT)
+        && (input == nullptr || bterm->getName() < input->getName())) {
+      input = bterm;
+    }
+  }
+  if (input != nullptr) {
+    return network->dbToSta(input);
+  }
+  if (any_iterm != nullptr) {
+    return network->dbToSta(any_iterm);
+  }
+  return any_bterm == nullptr ? nullptr : network->dbToSta(any_bterm);
+}
+
+}  // namespace
+
+PowerCapture Timing::getPowerCapture(const std::vector<std::string>& net_names,
+                                     const std::vector<std::string>& inst_names)
+{
+  odb::dbBlock* block = design_->getBlock();
+  if (block == nullptr) {
+    throw std::runtime_error("OpenROAD design is not loaded");
+  }
+  PowerCapture capture;
+  sta::dbSta* sta = getSta();
+  sta::dbNetwork* network = sta->getDbNetwork();
+  sta::Scene* scene = sta->cmdScene();
+  sta::Power* power = sta->power();
+
+  // Enter through Sta once so timing, clocks and activity are up to date even
+  // after a design edit. The read-only loops below call Power directly: its
+  // activity cache stays valid for this scene, and no STA preamble is repeated.
+  auto start = PowerCaptureClock::now();
+  const sta::Pin* seed_pin = nullptr;
+  for (odb::dbInst* inst : block->getInsts()) {
+    for (odb::dbITerm* iterm : inst->getITerms()) {
+      seed_pin = network->dbToSta(iterm);
+      if (seed_pin != nullptr) {
+        break;
+      }
+    }
+    if (seed_pin != nullptr) {
+      break;
+    }
+  }
+  if (seed_pin == nullptr) {
+    for (odb::dbBTerm* bterm : block->getBTerms()) {
+      seed_pin = network->dbToSta(bterm);
+      if (seed_pin != nullptr) {
+        break;
+      }
+    }
+  }
+  if (seed_pin != nullptr) {
+    sta->activity(seed_pin, scene);
+  } else if (!block->getInsts().empty()) {
+    // A cell without pins still needs the STA preamble before row queries.
+    sta->internalPowerRowStates(network->dbToSta(*block->getInsts().begin()),
+                                scene);
+  }
+  capture.voltage = getVoltage();
+  capture.preparation_seconds = powerCaptureSeconds(start);
+
+  start = PowerCaptureClock::now();
+  std::vector<float> activity(net_names.size(), 0.0f);
+  std::vector<float> duty(net_names.size(), 0.5f);
+  for (size_t idx = 0; idx < net_names.size(); ++idx) {
+    odb::dbNet* net = block->findNet(net_names[idx].c_str());
+    if (net == nullptr) {
+      continue;
+    }
+    const sta::Pin* pin = powerCaptureNetPin(net, network);
+    // Scalar queries on a null dbToSta pin return default PwrActivity (0,0),
+    // whereas a net with no candidates retains the loader default (0,0.5).
+    if (pin != nullptr) {
+      const sta::PwrActivity value = power->pinActivity(pin, scene);
+      activity[idx] = value.density();
+      duty[idx] = value.duty();
+    } else if (!net->getITerms().empty() || !net->getBTerms().empty()) {
+      duty[idx] = 0.0f;
+    }
+  }
+  capture.activity = packPowerValues(activity);
+  capture.duty = packPowerValues(duty);
+  capture.net_seconds = powerCaptureSeconds(start);
+
+  start = PowerCaptureClock::now();
+  std::vector<sta::Instance*> instances(inst_names.size(), nullptr);
+  std::vector<int64_t> gate_master(inst_names.size(), -1);
+  std::unordered_map<odb::dbMaster*, int64_t> master_ids;
+  std::vector<float> leakage_duty;
+  std::vector<int64_t> leakage_range{0};
+  for (size_t idx = 0; idx < inst_names.size(); ++idx) {
+    odb::dbInst* inst = block->findInst(inst_names[idx].c_str());
+    if (inst != nullptr) {
+      instances[idx] = network->dbToSta(inst);
+      sta::LibertyCell* cell = network->libertyCell(instances[idx]);
+      sta::LibertyCell* scene_cell
+          = cell == nullptr ? nullptr
+                            : cell->sceneCell(scene, sta::MinMax::max());
+      const auto [entry, inserted]
+          = master_ids.emplace(inst->getMaster(), capture.masters.size());
+      gate_master[idx] = entry->second;
+      if (inserted) {
+        MasterPowerRows rows;
+        rows.master_name = inst->getMaster()->getName();
+        if (scene_cell != nullptr) {
+          for (const sta::LeakagePower& leak : scene_cell->leakagePowers()) {
+            if (leak.when() != nullptr) {
+              rows.leakage_when.push_back(leak.when()->to_string());
+            }
+          }
+          for (const sta::InternalPower& row : scene_cell->internalPowers()) {
+            rows.internal_when.push_back(row.when() ? row.when()->to_string()
+                                                    : "");
+          }
+        }
+        capture.masters.push_back(std::move(rows));
+      }
+      if (scene_cell != nullptr) {
+        for (const sta::LeakagePower& leak : scene_cell->leakagePowers()) {
+          if (leak.when() != nullptr) {
+            leakage_duty.push_back(
+                power->leakageStateDuty(instances[idx], &leak, scene));
+          }
+        }
+      }
+    }
+    leakage_range.push_back(leakage_duty.size());
+  }
+  capture.gate_master = packPowerValues(gate_master);
+  capture.leakage_duty = packPowerValues(leakage_duty);
+  capture.leakage_range = packPowerValues(leakage_range);
+  capture.leakage_seconds = powerCaptureSeconds(start);
+
+  start = PowerCaptureClock::now();
+  std::vector<float> internal_duty, internal_from, internal_to;
+  std::vector<int64_t> internal_range{0};
+  for (sta::Instance* inst : instances) {
+    if (inst != nullptr) {
+      for (const sta::PwrInternalRowState& row :
+           power->internalPowerRowStates(inst, scene)) {
+        internal_duty.push_back(row.duty);
+        internal_from.push_back(row.from_density);
+        internal_to.push_back(row.to_density);
+      }
+    }
+    internal_range.push_back(internal_duty.size());
+  }
+  capture.internal_duty = packPowerValues(internal_duty);
+  capture.internal_from_density = packPowerValues(internal_from);
+  capture.internal_to_density = packPowerValues(internal_to);
+  capture.internal_range = packPowerValues(internal_range);
+  capture.internal_seconds = powerCaptureSeconds(start);
+  return capture;
 }
 
 std::vector<DisabledTimingArcDetail> Timing::getDisabledTimingArcDetails()
